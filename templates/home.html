@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Crawford TTMS — Timetable Management System</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --primary:#1e40af;--primary-light:#2563eb;--primary-pale:#eff6ff;
+    --gold:#c9a84c;--gold-light:#e8c97a;
+    --dark:#0a1628;--text:#1e293b;--muted:#64748b;
+  }
+  body{font-family:'Inter',sans-serif;overflow-x:hidden}
+
+  /* ── NAVBAR ── */
+  .navbar{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    padding:16px 0;
+    transition:all .35s ease;
+  }
+  .navbar.scrolled{
+    background:#fff!important;
+    box-shadow:0 2px 20px rgba(0,0,0,.08);
+    padding:10px 0;
+  }
+  .navbar.scrolled .nav-logo-text{color:var(--primary)!important}
+  .navbar.scrolled .navbar-nav .nav-link{color:#374151!important}
+  .navbar.scrolled .navbar-nav .nav-link:hover{color:var(--primary)!important}
+  .nav-logo-text{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:.04em;transition:color .3s}
+  .nav-logo-sub{font-size:.62rem;letter-spacing:.18em;color:rgba(255,255,255,.6);transition:color .3s}
+  .navbar.scrolled .nav-logo-sub{color:var(--muted)}
+  .nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .navbar-nav .nav-link{color:rgba(255,255,255,.85)!important;font-weight:500;font-size:.9rem;letter-spacing:.02em;padding:8px 16px!important;border-radius:8px;transition:all .25s}
+  .navbar-nav .nav-link:hover{color:#fff!important;background:rgba(255,255,255,.12)}
+  .btn-nav-login{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff!important;border-radius:10px;padding:8px 20px!important;font-weight:600;backdrop-filter:blur(8px);transition:all .28s}
+  .btn-nav-login:hover{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.7)}
+  .navbar.scrolled .btn-nav-login{background:var(--primary);border-color:var(--primary);color:#fff!important}
+  .navbar.scrolled .btn-nav-login:hover{background:var(--primary-light);border-color:var(--primary-light)}
+  .btn-nav-view{background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;color:var(--dark)!important;border-radius:10px;padding:8px 20px!important;font-weight:700;transition:all .28s}
+  .btn-nav-view:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.4)}
+
+  /* ── HERO ── */
+  .hero{
+    min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden;
+    background:linear-gradient(135deg,#0a1628 0%,#0f2145 40%,#1a3a6b 70%,#1e40af 100%);
+  }
+  /* Background image overlay */
+  .hero-img-overlay{
+    position:absolute;inset:0;z-index:0;
+    /*background:
+      url('https://images.unsplash.com/photo-1562774053-701939374585?w=1920&q=80&auto=format&fit=crop')
+      center/cover no-repeat;
+    opacity:.18;
+  }*/
+  background:
+      url('{{url_for("static", filename="images/ssd.jpeg")}}')
+      center/cover no-repeat;
+    opacity:.18;
+  }
+  .hero-grid{position:absolute;inset:0;z-index:1;background-image:repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,.025) 60px,rgba(255,255,255,.025) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,255,255,.025) 60px,rgba(255,255,255,.025) 61px)}
+  .hero-glow{position:absolute;top:-200px;right:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.35) 0%,transparent 70%);z-index:1}
+  .hero-glow2{position:absolute;bottom:-150px;left:-150px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.15) 0%,transparent 70%);z-index:1}
+  .hero-content{position:relative;z-index:2}
+
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:6px 18px;font-size:.78rem;color:rgba(255,255,255,.85);letter-spacing:.05em;font-weight:500}
+  .hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,6vw,5rem);font-weight:900;line-height:1.1;color:#fff}
+  .hero-title .accent{color:var(--gold-light);font-style:italic}
+  .hero-sub{font-size:1.05rem;color:rgba(255,255,255,.65);line-height:1.75;max-width:520px}
+  .hero-divider{width:60px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:3px}
+
+  .btn-hero-primary{background:linear-gradient(135deg,var(--primary),#3b82f6);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:1rem;letter-spacing:.03em;transition:all .3s;display:inline-flex;align-items:center;gap:10px}
+  .btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(37,99,235,.45);color:#fff}
+  .btn-hero-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);border:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:1rem;letter-spacing:.03em;transition:all .3s;display:inline-flex;align-items:center;gap:10px}
+  .btn-hero-gold:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(201,168,76,.45);color:var(--dark)}
+
+  /* HERO STATS */
+  .hero-stat{text-align:center;padding:16px 24px;background:rgba(255,255,255,.08);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15);border-radius:14px}
+  .hero-stat-num{font-size:1.8rem;font-weight:800;color:#fff;line-height:1;font-family:'Inter',sans-serif}
+  .hero-stat-lbl{font-size:.72rem;color:rgba(255,255,255,.55);letter-spacing:.1em;margin-top:4px}
+
+  /* HERO CARD (right) */
+  .hero-card{background:rgba(255,255,255,.1);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:32px;color:#fff}
+  .hero-card-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .feature-chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 14px;font-size:.82rem;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.85)}
+
+  /* ── FEATURES ── */
+  .section-features{background:#f8fafc;padding:90px 0}
+  .section-label{font-size:.72rem;font-weight:700;letter-spacing:.2em;color:var(--primary);text-transform:uppercase}
+  .section-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;color:var(--text);line-height:1.2}
+  .feature-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;height:100%;transition:all .3s}
+  .feature-card:hover{border-color:var(--primary);box-shadow:0 8px 30px rgba(30,64,175,.1);transform:translateY(-3px)}
+  .feature-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;margin-bottom:16px}
+
+  /* ── HOW IT WORKS ── */
+  .section-how{padding:90px 0;background:#fff}
+  .step-number{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;font-size:.95rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step-line{width:2px;height:40px;background:linear-gradient(180deg,var(--primary),transparent);margin:0 auto}
+
+  /* ── CTA ── */
+  .section-cta{background:linear-gradient(135deg,#0a1628 0%,#0f2145 50%,#1e40af 100%);padding:90px 0;position:relative;overflow:hidden}
+  .section-cta::before{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.3),transparent 70%)}
+  .section-cta::after{content:'';position:absolute;bottom:-80px;left:-80px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.15),transparent 70%)}
+
+  /* ── FOOTER ── */
+  footer{background:#0a1628;padding:48px 0 24px;color:rgba(255,255,255,.55);font-size:.85rem}
+  .footer-brand{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:#fff}
+  footer a{color:rgba(255,255,255,.45);text-decoration:none;transition:.2s}
+  footer a:hover{color:#fff}
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+  .fade-up{animation:fadeUp .65s ease forwards}
+  .fade-up-2{animation:fadeUp .65s ease .15s forwards;opacity:0}
+  .fade-up-3{animation:fadeUp .65s ease .3s forwards;opacity:0}
+  .fade-up-4{animation:fadeUp .65s ease .45s forwards;opacity:0}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .float-anim{animation:float 4s ease-in-out infinite}
+
+  /* ── SCROLL REVEAL ── */
+  .reveal{opacity:0;transform:translateY(24px);transition:all .6s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:991px){.hero{min-height:auto;padding:120px 0 70px}}
+  @media(max-width:767px){.hero-title{font-size:2.4rem}.hero-card{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     NAVBAR
+════════════════════════════ -->
+<nav class="navbar navbar-expand-lg" id="navbar">
+  <div class="container">
+    <!-- Logo -->
+    <a class="navbar-brand d-flex align-items-center gap-3" href="/">
+      <div class="nav-logo-icon">
+        <!-- <i class="fa-solid fa-graduation-cap text-white" style="font-size:15px"></i> -->
+        <img src="{{url_for('static', filename='images/logo.jpg')}}" width="50px" height="50px"/>
+      </div>
+      <div>
+        <div class="nav-logo-text">Crawford TTMS</div>
+        <div class="nav-logo-sub">TIMETABLE SYSTEM</div>
+      </div>
+    </a>
+
+    <!-- Toggler -->
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" style="color:#fff">
+      <i class="fa-solid fa-bars fa-lg"></i>
+    </button>
+
+    <!-- Menu -->
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-center gap-1">
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#how-it-works">How it Works</a></li>
+        <li class="nav-item ms-lg-2">
+          <a href="/view-timetable" class="nav-link btn-nav-view">
+            <i class="fa-solid fa-calendar-week me-1"></i>View Timetable
+          </a>
+        </li>
+        <li class="nav-item ms-lg-1">
+          <a href="/login" class="nav-link btn-nav-login">
+            <i class="fa-solid fa-right-to-bracket me-1"></i>Login
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════
+     HERO
+════════════════════════════ -->
+<section class="hero" id="home">
+  <div class="hero-img-overlay"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="container hero-content py-5">
+    <div class="row align-items-center g-5">
+      <!-- Left Content -->
+      <div class="col-lg-6">
+        <div class="hero-badge mb-4 fade-up mt-5">
+          <i class="fa-solid fa-star" style="color:var(--gold-light);font-size:10px"></i>
+          Crawford University &mdash; Official Platform
+        </div>
+
+        <h1 class="hero-title mb-4 fade-up-2">
+          Manage Your<br/>
+          <span class="accent">Timetables</span><br/>
+          Seamlessly.
+        </h1>
+
+        <div class="hero-divider mb-4 fade-up-3"></div>
+
+        <p class="hero-sub mb-5 fade-up-3">
+          Crawford TTMS is the university's official timetable management system — submit, approve, and explore course schedules across all departments, levels, and sessions.
+        </p>
+
+        <div class="d-flex flex-wrap gap-3 mb-5 fade-up-4">
+          <a href="/view-timetable" class="btn-hero-gold text-decoration-none">
+            <i class="fa-solid fa-calendar-week"></i>View Timetable
+          </a>
+          <a href="/login" class="btn-hero-primary text-decoration-none">
+            <i class="fa-solid fa-right-to-bracket"></i>Login to Dashboard
+          </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-3 fade-up-4" id="hero-stats">
+          <div class="col-4"><div class="hero-stat"><div class="hero-stat-num" id="hs-depts">6</div><div class="hero-stat-lbl">DEPARTMENTS</div></div></div>
+          <div class="col-4"><div class="hero-stat"><div class="hero-stat-num" id="hs-cats">6</div><div class="hero-stat-lbl">CATEGORIES</div></div></div>
+          <div class="col-4"><div class="hero-stat"><div class="hero-stat-num" id="hs-tt">4+</div><div class="hero-stat-lbl">TIMETABLES</div></div></div>
+        </div>
+      </div>
+
+      <!-- Right Card -->
+      <div class="col-lg-6 d-none d-lg-block float-anim">
+        <div class="hero-card">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center">
+              <i class="fa-solid fa-graduation-cap fa-lg text-white"></i>
+            </div>
+            <div>
+              <div style="font-size:.95rem;font-weight:700;color:#fff">Crawford TTMS</div>
+              <div style="font-size:.75rem;color:rgba(255,255,255,.55)">Timetable Management System</div>
+            </div>
+            <span class="ms-auto" style="font-size:.7rem;background:rgba(34,197,94,.2);color:#4ade80;border:1px solid rgba(74,222,128,.3);padding:3px 10px;border-radius:20px;font-weight:700">LIVE</span>
+          </div>
+
+          <div class="d-flex flex-column gap-3 mb-4">
+            <div class="feature-chip"><i class="fa-solid fa-calendar-check" style="color:var(--gold-light)"></i>Submit & track timetables for approval</div>
+            <div class="feature-chip"><i class="fa-solid fa-tags" style="color:var(--gold-light)"></i>Dynamic categories — managed by admin</div>
+            <div class="feature-chip"><i class="fa-solid fa-building-columns" style="color:var(--gold-light)"></i>Multi-department support</div>
+            <div class="feature-chip"><i class="fa-solid fa-bell" style="color:var(--gold-light)"></i>Real-time approval notifications</div>
+            <div class="feature-chip"><i class="fa-solid fa-calendar-week" style="color:var(--gold-light)"></i>Public timetable viewer — no login needed</div>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <a href="/view-timetable" class="btn btn-light w-100 fw-semibold" style="border-radius:10px;font-size:.85rem">
+                <i class="fa-solid fa-eye me-2"></i>View Timetables
+              </a>
+            </div>
+            <div class="col-6">
+              <a href="/login" class="btn w-100 fw-semibold" style="background:linear-gradient(135deg,var(--primary),#3b82f6);color:#fff;border:none;border-radius:10px;font-size:.85rem">
+                <i class="fa-solid fa-lock me-2"></i>Admin / Student
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:2;text-align:center">
+    <div style="font-size:.7rem;color:rgba(255,255,255,.4);letter-spacing:.12em;margin-bottom:6px">SCROLL</div>
+    <i class="fa-solid fa-chevron-down" style="color:rgba(255,255,255,.4);animation:bounce .8s ease infinite alternate"></i>
+  </div>
+</section>
+
+<style>@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(6px)}}</style>
+
+
+<!-- ════════════════════════════
+     FEATURES
+════════════════════════════ -->
+<section id="features" class="section-features">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <div class="section-label mb-2"><i class="fa-solid fa-star me-2" style="color:var(--gold)"></i>Platform Features</div>
+      <h2 class="section-title mb-3">Everything You Need to<br/><span style="color:var(--primary)">Manage University Timetables</span></h2>
+      <p class="text-muted mx-auto" style="max-width:500px;font-size:.95rem">A powerful, role-based system built for Crawford University's academic scheduling needs.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#eff6ff;color:#2563eb"><i class="fa-solid fa-calendar-days"></i></div>
+          <h5 class="fw-bold mb-2" style="font-size:1rem">Timetable Submission</h5>
+          <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.7">Students submit course timetables with full details — venue, lecturer, time slots — for admin review and approval.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.08s">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#f0fdf4;color:#16a34a"><i class="fa-solid fa-circle-check"></i></div>
+          <h5 class="fw-bold mb-2" style="font-size:1rem">Admin Approval Workflow</h5>
+          <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.7">Administrators review, approve, or reject submissions with notes. Students receive instant notifications of decisions.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.16s">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fff7ed;color:#ea580c"><i class="fa-solid fa-tags"></i></div>
+          <h5 class="fw-bold mb-2" style="font-size:1rem">Dynamic Categories</h5>
+          <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.7">Admins create and manage timetable categories (Lecture, Lab, Seminar, etc.) that students choose from when submitting.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.08s">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#f5f3ff;color:#7c3aed"><i class="fa-solid fa-building-columns"></i></div>
+          <h5 class="fw-bold mb-2" style="font-size:1rem">Department Management</h5>
+          <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.7">Admin dynamically adds and manages university departments used in student registration and timetable filtering.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.16s">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fff1f2;color:#dc2626"><i class="fa-solid fa-users-gear"></i></div>
+          <h5 class="fw-bold mb-2" style="font-size:1rem">Admin-Controlled Accounts</h5>
+          <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.7">Only administrators can create student accounts — ensuring controlled access. No public self-registration allowed.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" style="transition-delay:.24s">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fefce8;color:#ca8a04"><i class="fa-solid fa-calendar-week"></i></div>
+          <h5 class="fw-bold mb-2" style="font-size:1rem">Public Timetable Viewer</h5>
+          <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.7">Anyone can view approved timetables by selecting department, level, session year, and category — no login needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     HOW IT WORKS
+════════════════════════════ -->
+<section id="how-it-works" class="section-how">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5 reveal">
+        <div class="section-label mb-3"><i class="fa-solid fa-list-ol me-2" style="color:var(--gold)"></i>How It Works</div>
+        <h2 class="section-title mb-4">Simple. Structured.<br/><span style="color:var(--primary)">Powerful.</span></h2>
+        <p class="text-muted mb-4" style="font-size:.95rem;line-height:1.75">Crawford TTMS is designed for smooth timetable management — from account creation to public schedule viewing.</p>
+        <a href="/view-timetable" class="btn btn-primary px-5 py-3 fw-semibold" style="border-radius:12px">
+          <i class="fa-solid fa-calendar-week me-2"></i>View Current Timetables
+        </a>
+      </div>
+      <div class="col-lg-7 reveal" style="transition-delay:.12s">
+        <div class="d-flex flex-column gap-4">
+          <div class="d-flex gap-4 align-items-start">
+            <div class="step-number flex-shrink-0">1</div>
+            <div>
+              <h6 class="fw-bold mb-1">Admin Creates Departments & Categories</h6>
+              <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.6">The administrator sets up university departments and timetable categories that students will choose from during submission.</p>
+            </div>
+          </div>
+          <div class="d-flex gap-4 align-items-start">
+            <div class="step-number flex-shrink-0">2</div>
+            <div>
+              <h6 class="fw-bold mb-1">Admin Registers Student Accounts</h6>
+              <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.6">Student accounts are created exclusively by administrators with name, email, department, level, and password.</p>
+            </div>
+          </div>
+          <div class="d-flex gap-4 align-items-start">
+            <div class="step-number flex-shrink-0">3</div>
+            <div>
+              <h6 class="fw-bold mb-1">Students Submit Timetables</h6>
+              <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.6">Logged-in students submit timetables with course details, time slots, venue, lecturer, and select a category.</p>
+            </div>
+          </div>
+          <div class="d-flex gap-4 align-items-start">
+            <div class="step-number flex-shrink-0">4</div>
+            <div>
+              <h6 class="fw-bold mb-1">Admin Reviews & Approves</h6>
+              <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.6">Admin reviews submissions, approves or rejects with notes. Students receive real-time notifications instantly.</p>
+            </div>
+          </div>
+          <div class="d-flex gap-4 align-items-start">
+            <div class="step-number flex-shrink-0">5</div>
+            <div>
+              <h6 class="fw-bold mb-1">Public Can View Approved Timetables</h6>
+              <p class="text-muted mb-0" style="font-size:.875rem;line-height:1.6">Anyone can browse approved timetables by department, level, session, and category — no account needed.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     CTA
+════════════════════════════ -->
+<section class="section-cta">
+  <div class="container text-center position-relative" style="z-index:2">
+    <div class="reveal">
+      <div class="hero-badge mx-auto mb-4 d-inline-flex"><i class="fa-solid fa-graduation-cap" style="color:var(--gold-light)"></i>Crawford University</div>
+      <h2 class="text-white fw-bold mb-3" style="font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3rem)">Ready to Get Started?</h2>
+      <p class="mb-5 mx-auto" style="color:rgba(255,255,255,.6);max-width:480px;font-size:.95rem;line-height:1.7">Browse approved timetables instantly or log in to manage your submissions.</p>
+      <div class="d-flex justify-content-center flex-wrap gap-3">
+        <a href="/view-timetable" class="btn-hero-gold text-decoration-none">
+          <i class="fa-solid fa-calendar-week"></i>View Timetables — No Login
+        </a>
+        <a href="/login" class="btn-hero-primary text-decoration-none">
+          <i class="fa-solid fa-right-to-bracket"></i>Login to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════
+     FOOTER
+════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="row g-4 mb-5">
+      <div class="col-lg-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="nav-logo-icon"><i class="fa-solid fa-graduation-cap text-white" style="font-size:15px"></i></div>
+          <div class="footer-brand">Crawford TTMS</div>
+        </div>
+        <p style="font-size:.85rem;line-height:1.7;color:rgba(255,255,255,.4)">Crawford University's official timetable management system. Simplifying academic scheduling for students and administrators.</p>
+      </div>
+      <div class="col-sm-4 col-lg-2">
+        <div class="fw-bold text-white mb-3" style="font-size:.82rem;letter-spacing:.08em">PLATFORM</div>
+        <div class="d-flex flex-column gap-2">
+          <a href="/">Home</a>
+          <a href="/view-timetable">View Timetable</a>
+          <a href="/login">Login</a>
+        </div>
+      </div>
+      <div class="col-sm-4 col-lg-2">
+        <div class="fw-bold text-white mb-3" style="font-size:.82rem;letter-spacing:.08em">FEATURES</div>
+        <div class="d-flex flex-column gap-2">
+          <a href="#features">Timetable Submission</a>
+          <a href="#features">Approval Workflow</a>
+          <a href="#features">Categories</a>
+        </div>
+      </div>
+      <div class="col-sm-4 col-lg-4">
+        <div class="fw-bold text-white mb-3" style="font-size:.82rem;letter-spacing:.08em">QUICK STATS</div>
+        <div class="row g-2" id="footer-stats"></div>
+      </div>
+    </div>
+    <div class="border-top pt-4 d-flex flex-wrap justify-content-between gap-3" style="border-color:rgba(255,255,255,.08)!important">
+      <div>&copy; 2025 Crawford University. All rights reserved.</div>
+      <div>Built with <i class="fa-solid fa-heart text-danger"></i> for Crawford University</div>
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Navbar scroll effect
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>60);
+});
+
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Load stats
+async function loadHomeStats(){
+  try{
+    const r=await fetch('/api/stats');
+    if(!r.ok)return;
+    const d=await r.json();
+    // Hero
+    if(document.getElementById('hs-depts'))document.getElementById('hs-depts').textContent=d.departments||6;
+    if(document.getElementById('hs-cats'))document.getElementById('hs-cats').textContent=d.categories||6;
+    if(document.getElementById('hs-tt'))document.getElementById('hs-tt').textContent=(d.total||4)+'+';
+    // Footer
+    const fs=document.getElementById('footer-stats');
+    if(fs){
+      fs.innerHTML=[
+        ['Timetables',d.total||0],['Approved',d.approved||0],['Departments',d.departments||0],['Categories',d.categories||0]
+      ].map(([l,v])=>`<div class="col-6"><div style="font-size:1.1rem;font-weight:800;color:#fff">${v}</div><div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:1px">${l}</div></div>`).join('');
+    }
+  }catch(e){}
+}
+loadHomeStats();
+</script>
+</body>
+</html>

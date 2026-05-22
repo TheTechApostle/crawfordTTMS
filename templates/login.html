@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Crawford TTMS — Login</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet"/>
+<style>
+  body{font-family:'Inter',sans-serif;background:#f1f5f9;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .brand-bar{background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 50%,#2563eb 100%);min-height:100vh}
+  .brand-logo{width:72px;height:72px;background:rgba(255,255,255,.18);border-radius:20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25)}
+  .card{border:none;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+  .form-control,.form-select{border-radius:10px;border:1.5px solid #e2e8f0;padding:.65rem 1rem;font-size:.875rem;transition:.2s}
+  .form-control:focus,.form-select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .btn-primary{background:linear-gradient(135deg,#1e40af,#2563eb);border:none;border-radius:10px;padding:.7rem 1.5rem;font-weight:600;letter-spacing:.02em;transition:.25s}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,.35);background:linear-gradient(135deg,#1d4ed8,#3b82f6)}
+  .btn-outline-secondary{border-radius:10px;font-size:.82rem}
+  .input-group-text{border-radius:10px 0 0 10px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b}
+  .input-group .form-control{border-radius:0 10px 10px 0;border-left:none}
+  .input-group .form-control:focus{border-color:#2563eb;border-left:none}
+  .input-group:focus-within .input-group-text{border-color:#2563eb}
+  .divider-text{position:relative;text-align:center}
+  .divider-text::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:#e2e8f0}
+  .divider-text span{background:#fff;position:relative;padding:0 12px;font-size:.78rem;color:#94a3b8}
+  .demo-btn{border:1.5px solid #e2e8f0;background:#f8fafc;border-radius:10px;transition:.2s;cursor:pointer}
+  .demo-btn:hover{border-color:#2563eb;background:#eff6ff}
+  .badge-role{font-size:.65rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:20px}
+  #toast-container{position:fixed;top:20px;right:20px;z-index:9999;min-width:300px}
+  .stat-pill{background:rgba(255,255,255,.15);border-radius:12px;padding:12px 16px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div class="container-fluid p-0" style="min-height:100vh">
+  <div class="row g-0" style="min-height:100vh">
+
+    <!-- LEFT BRAND PANEL -->
+    <div class="col-lg-5 brand-bar d-none d-lg-flex flex-column justify-between p-5 text-white">
+      <div>
+        <div class="brand-logo mb-4">
+          <i class="fa-solid fa-graduation-cap fa-2x text-white"></i>
+        </div>
+        <h1 class="fw-bold mb-1" style="font-family:'Playfair Display',serif;font-size:2.2rem">Crawford TTMS</h1>
+        <p class="opacity-75 mb-0" style="font-size:.85rem;letter-spacing:.1em">TIMETABLE MANAGEMENT SYSTEM</p>
+      </div>
+
+      <div class="my-auto py-5">
+        <h2 class="fw-bold mb-3" style="font-size:1.7rem;line-height:1.3">Streamline Your University Timetables</h2>
+        <p class="opacity-75 mb-4" style="font-size:.9rem;line-height:1.7">Manage course schedules, mentor approvals, and academic planning — all in one powerful platform built for Crawford University.</p>
+        <div class="row g-3">
+          <div class="col-6"><div class="stat-pill"><div class="fw-bold fs-5">6</div><div style="font-size:.75rem;opacity:.75">Departments</div></div></div>
+          <div class="col-6"><div class="stat-pill"><div class="fw-bold fs-5">42+</div><div style="font-size:.75rem;opacity:.75">Course Categories</div></div></div>
+          <div class="col-6"><div class="stat-pill"><div class="fw-bold fs-5">100%</div><div style="font-size:.75rem;opacity:.75">Approval Tracked</div></div></div>
+          <div class="col-6"><div class="stat-pill"><div class="fw-bold fs-5">Real-time</div><div style="font-size:.75rem;opacity:.75">Notifications</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="opacity-50 mb-0" style="font-size:.78rem">© 2025 Crawford University. All rights reserved.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT FORM PANEL -->
+    <div class="col-lg-7 d-flex align-items-center justify-content-center bg-white" style="min-height:100vh">
+      <div class="w-100 px-4 px-sm-5 py-5" style="max-width:480px">
+
+        <!-- Mobile logo -->
+        <div class="d-lg-none text-center mb-4">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-2" style="width:52px;height:52px;background:linear-gradient(135deg,#1e40af,#2563eb)">
+            <i class="fa-solid fa-graduation-cap text-white"></i>
+          </div>
+          <h1 class="fw-bold mb-0" style="font-size:1.4rem;color:#1e40af">Crawford TTMS</h1>
+        </div>
+
+        <h2 class="fw-bold mb-1" style="font-size:1.6rem;color:#0f172a">Welcome back</h2>
+        <p class="text-muted mb-4" style="font-size:.875rem">Sign in to your Crawford TTMS account</p>
+
+        <!-- LOGIN FORM -->
+        <div id="login-section">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary" style="font-size:.8rem;letter-spacing:.05em">EMAIL ADDRESS</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-envelope text-muted" style="font-size:.85rem"></i></span>
+              <input id="l-email" type="email" class="form-control" placeholder="your@crawford.edu.ng"/>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary" style="font-size:.8rem;letter-spacing:.05em">PASSWORD</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-lock text-muted" style="font-size:.85rem"></i></span>
+              <input id="l-pw" type="password" class="form-control" placeholder="Enter your password"/>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePw('l-pw',this)" style="border-radius:0 10px 10px 0;border:1.5px solid #e2e8f0;border-left:none">
+                <i class="fa-solid fa-eye text-muted" style="font-size:.85rem"></i>
+              </button>
+            </div>
+          </div>
+
+          <button onclick="doLogin()" id="login-btn" class="btn btn-primary w-100 mb-3">
+            <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
+          </button>
+
+          <!-- ADMIN NOTICE -->
+          <div class="alert alert-light border d-flex align-items-start gap-2 mb-3 p-3" style="border-radius:12px;font-size:.82rem">
+            <i class="fa-solid fa-circle-info text-primary mt-0.5 flex-shrink-0"></i>
+            <div><strong>Student Access:</strong> Student accounts are created by the administrator. Contact your admin if you need access.</div>
+          </div>
+
+          <!-- DEMO QUICK ACCESS -->
+          <div class="divider-text mb-3"><span>Quick Demo Access</span></div>
+          <div class="row g-2">
+            <div class="col-6">
+              <button onclick="fill('admin@crawford.edu.ng','admin123')" class="demo-btn w-100 p-2 text-start">
+                <span class="badge-role me-1" style="background:#dbeafe;color:#1e40af">ADMIN</span>
+                <span style="font-size:.8rem;color:#374151">Dr. Admin Crawford</span>
+              </button>
+            </div>
+            <div class="col-6">
+              <button onclick="fill('samuel@crawford.edu.ng','student123')" class="demo-btn w-100 p-2 text-start">
+                <span class="badge-role me-1" style="background:#dcfce7;color:#166534">STUDENT</span>
+                <span style="font-size:.8rem;color:#374151">Samuel Okafor</span>
+              </button>
+            </div>
+            <div class="col-6">
+              <button onclick="fill('chidinma@crawford.edu.ng','student123')" class="demo-btn w-100 p-2 text-start">
+                <span class="badge-role me-1" style="background:#dcfce7;color:#166534">STUDENT</span>
+                <span style="font-size:.8rem;color:#374151">Chidinma Eze</span>
+              </button>
+            </div>
+            <div class="col-6">
+              <button onclick="fill('emeka@crawford.edu.ng','student123')" class="demo-btn w-100 p-2 text-start">
+                <span class="badge-role me-1" style="background:#dcfce7;color:#166534">STUDENT</span>
+                <span style="font-size:.8rem;color:#374151">Emeka Nwosu</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-center text-muted mt-4 mb-0" style="font-size:.78rem">
+          Crawford University &copy; 2025 &mdash; Timetable Management System
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toast(msg, type='info'){
+  const colors={info:'text-bg-primary',success:'text-bg-success',error:'text-bg-danger',warning:'text-bg-warning'};
+  const icons={info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation'};
+  const id='t'+Date.now();
+  const html=`<div id="${id}" class="toast show align-items-center ${colors[type]}" role="alert" style="border-radius:12px;margin-bottom:8px">
+    <div class="d-flex"><div class="toast-body d-flex align-items-center gap-2">
+      <i class="fa-solid ${icons[type]}"></i>${msg}
+    </div><button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
+    </div></div>`;
+  document.getElementById('toast-container').insertAdjacentHTML('beforeend',html);
+  setTimeout(()=>{const el=document.getElementById(id);if(el)el.remove()},3500);
+}
+function togglePw(id,btn){
+  const el=document.getElementById(id);
+  el.type=el.type==='password'?'text':'password';
+  btn.querySelector('i').className='fa-solid '+(el.type==='text'?'fa-eye-slash':'fa-eye')+' text-muted';
+}
+function fill(email,pw){
+  document.getElementById('l-email').value=email;
+  document.getElementById('l-pw').value=pw;
+  toast('Demo credentials filled — click Sign In','info');
+}
+async function doLogin(){
+  const btn=document.getElementById('login-btn');
+  const email=document.getElementById('l-email').value.trim();
+  const pw=document.getElementById('l-pw').value;
+  if(!email||!pw){toast('Enter email and password','warning');return}
+  btn.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>Signing in…';btn.disabled=true;
+  const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
+  const d=await r.json();
+  btn.innerHTML='<i class="fa-solid fa-right-to-bracket me-2"></i>Sign In';btn.disabled=false;
+  if(d.error){toast(d.error,'error');return}
+  toast('Welcome, '+d.user.full_name+'!','success');
+  setTimeout(()=>location.href='/dashboard',600);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+</script>
+</body>
+</html>

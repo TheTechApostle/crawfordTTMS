@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>View Timetables — Crawford TTMS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1e40af;--pl:#2563eb;--pp:#eff6ff;--pb:#bfdbfe;
+  --gold:#c9a84c;--gold-l:#e8c97a;
+  --dark:#0a1628;--text:#1e293b;--muted:#64748b;
+  --border:#e2e8f0;--bg:#f1f5f9;--white:#ffffff;
+  --green:#16a34a;--green-l:#dcfce7;--green-b:#bbf7d0;
+  --amber:#d97706;--amber-l:#fef3c7;--amber-b:#fde68a;
+  --red:#dc2626;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{background:linear-gradient(135deg,#0a1628 0%,#0f2145 50%,#1e40af 100%);padding:13px 0;position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.3)}
+.tl-name{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:#fff;letter-spacing:.03em;line-height:1.1}
+.tl-sub{font-size:.6rem;color:rgba(255,255,255,.48);letter-spacing:.16em;line-height:1}
+.tl-icon{width:33px;height:33px;background:rgba(255,255,255,.14);border-radius:9px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.2);flex-shrink:0}
+.btn-tl{border-radius:8px;font-size:.8rem;font-weight:600;padding:6px 14px;transition:.22s}
+.btn-home{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.85)}
+.btn-home:hover{background:rgba(255,255,255,.2);color:#fff}
+.btn-login{background:linear-gradient(135deg,var(--gold),var(--gold-l));border:none;color:var(--dark);font-weight:700}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(201,168,76,.4);color:var(--dark)}
+
+/* ── HERO STRIP ── */
+.hero-strip{background:linear-gradient(135deg,#0f2145 0%,#1e3a8a 60%,#1e40af 100%);padding:44px 0 58px;position:relative;overflow:hidden}
+.hero-strip::after{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.05),transparent 70%);pointer-events:none}
+.hero-strip::before{content:'';position:absolute;bottom:-70px;left:-70px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.1),transparent 70%);pointer-events:none}
+.badge-public{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:4px 14px;font-size:.72rem;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.04em}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(1.7rem,4vw,2.5rem);font-weight:700;color:#fff;line-height:1.2}
+.hero-sub{color:rgba(255,255,255,.58);font-size:.9rem;max-width:520px;line-height:1.7}
+
+/* ── FILTER CARD ── */
+.filter-card{background:var(--white);border:1px solid var(--border);border-radius:18px;box-shadow:0 6px 28px rgba(30,64,175,.08);margin-top:-34px;position:relative;z-index:10;padding:24px}
+.f-label{font-size:.7rem;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px}
+.form-control,.form-select{border:1.5px solid var(--border);border-radius:10px;font-size:.875rem;padding:.58rem .9rem;transition:.2s;background:var(--white);color:var(--text);width:100%}
+.form-control:focus,.form-select:focus{border-color:var(--pl);box-shadow:0 0 0 3px rgba(37,99,235,.1);background:var(--white)}
+.form-control::placeholder{color:#94a3b8}
+
+/* ── ACTIVE FILTERS PILLS ── */
+.active-filter-pill{display:inline-flex;align-items:center;gap:6px;background:var(--pp);border:1px solid var(--pb);color:var(--primary);border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:600}
+.active-filter-pill button{background:none;border:none;color:var(--primary);cursor:pointer;padding:0;font-size:12px;line-height:1;display:flex;align-items:center}
+
+/* ── RESULT BAR ── */
+.result-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.result-count{font-size:.875rem;color:var(--muted)}
+.result-count strong{color:var(--text);font-size:1rem}
+
+/* ── VIEW TOGGLE ── */
+.vt-btn{background:var(--white);border:1.5px solid var(--border);color:var(--muted);border-radius:9px;padding:7px 14px;font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px}
+.vt-btn.on,.vt-btn:hover{background:var(--pp);border-color:var(--pb);color:var(--primary)}
+
+/* ── TABLE ── */
+.tbl-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.tbl{width:100%;border-collapse:collapse;font-size:.855rem}
+.tbl thead th{background:#f8fafc;font-size:.7rem;font-weight:800;letter-spacing:.09em;color:var(--muted);padding:12px 16px;border-bottom:2px solid var(--border);white-space:nowrap;text-transform:uppercase;user-select:none}
+.tbl thead th.sortable{cursor:pointer}
+.tbl thead th.sortable:hover{color:var(--primary)}
+.tbl tbody td{padding:13px 16px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:var(--text)}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl tbody tr{cursor:pointer;transition:background .15s}
+.tbl tbody tr:hover td{background:#f8fbff}
+
+/* ── CARD GRID ── */
+.tt-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px;height:100%;cursor:pointer;transition:all .25s}
+.tt-card:hover{border-color:var(--pb);box-shadow:0 6px 20px rgba(30,64,175,.1);transform:translateY(-2px)}
+.tt-cat-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ── WEEK GRID ── */
+.wk-outer{overflow-x:auto;border-radius:12px;border:1px solid var(--border);background:var(--white)}
+.wk-grid{display:grid;grid-template-columns:76px repeat(6,1fr);gap:2px;background:#f1f5f9;padding:2px;min-width:640px;border-radius:12px}
+.wk-hdr{background:var(--white);border-radius:7px;padding:8px 4px;text-align:center;font-size:.68rem;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase}
+.wk-time{background:var(--white);border-radius:6px;padding:5px 8px;font-size:.7rem;color:var(--muted);display:flex;align-items:center;white-space:nowrap}
+.wk-cell{background:var(--white);border-radius:6px;min-height:36px}
+.wk-ev{border-left:3px solid;border-radius:4px;padding:3px 6px;font-size:.68rem;font-weight:700;margin:2px;color:#fff;cursor:pointer;line-height:1.3;transition:opacity .15s}
+.wk-ev:hover{opacity:.85}
+
+/* ── BADGES ── */
+.cat-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.slot-chip{display:inline-flex;align-items:center;gap:4px;background:var(--pp);color:var(--primary);border:1px solid var(--pb);border-radius:16px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;margin:2px 2px 2px 0}
+.badge-ok{background:var(--green-l);color:var(--green);border:1px solid var(--green-b);padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700}
+
+/* ── EMPTY / LOADING ── */
+.empty-box{text-align:center;padding:64px 20px;color:var(--muted)}
+.empty-box i{font-size:50px;color:#cbd5e1;display:block;margin-bottom:14px}
+.loading-box{text-align:center;padding:52px;color:var(--muted)}
+
+/* ── MODAL ── */
+.modal-content{border-radius:18px;border:none;box-shadow:0 24px 60px rgba(0,0,0,.16)}
+.modal-header{border-bottom:1px solid var(--border);padding:18px 22px}
+.dt-block{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.dt-label{font-size:.65rem;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.dt-row{display:flex;align-items:start;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+.dt-row:last-child{border-bottom:none}
+.dt-icon{width:26px;text-align:center;flex-shrink:0;color:var(--primary);font-size:.85rem}
+.dt-lbl{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.dt-val{font-size:.875rem;color:var(--text);font-weight:500}
+
+/* ── PAGINATION ── */
+.pag-btn{background:var(--white);border:1.5px solid var(--border);color:var(--muted);border-radius:9px;padding:7px 14px;font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s}
+.pag-btn.on,.pag-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+.pag-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── SKELETON ── */
+.skel{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:skel 1.4s ease-in-out infinite;border-radius:6px;height:14px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:575px){.filter-card{margin-top:-20px;padding:16px}.hero-strip{padding:32px 0 48px}}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<nav class="topbar">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <a href="/" class="text-decoration-none d-flex align-items-center gap-2">
+        <div class="tl-icon"><i class="fa-solid fa-graduation-cap text-white" style="font-size:13px"></i></div>
+        <div><div class="tl-name">Crawford TTMS</div><div class="tl-sub">TIMETABLE SYSTEM</div></div>
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <a href="/" class="btn-tl btn-home text-decoration-none"><i class="fa-solid fa-house me-1"></i><span class="d-none d-sm-inline">Home</span></a>
+        <a href="/login" class="btn-tl btn-login text-decoration-none"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero-strip">
+  <div class="container position-relative" style="z-index:2">
+    <div class="badge-public mb-3">
+      <i class="fa-solid fa-unlock" style="font-size:10px"></i>No Login Required
+    </div>
+    <h1 class="hero-title mb-2"><i class="fa-solid fa-calendar-week me-3" style="color:var(--gold-l);font-size:.85em"></i>Browse Timetables</h1>
+    <p class="hero-sub">Filter by department, level, session year and category to find any approved timetable at Crawford University.</p>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="container pb-5">
+
+  <!-- FILTER CARD -->
+  <div class="filter-card mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+      <h6 class="fw-bold mb-0" style="font-size:.9rem"><i class="fa-solid fa-sliders me-2 text-primary"></i>Filter Timetables</h6>
+      <button onclick="clearAll()" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem">
+        <i class="fa-solid fa-rotate-left me-1"></i>Clear All
+      </button>
+    </div>
+
+    <div class="row g-3">
+      <!-- Department -->
+      <div class="col-6 col-md-3">
+        <label class="f-label"><i class="fa-solid fa-building-columns me-1 text-primary"></i>Department</label>
+        <select id="f-dept" class="form-select" onchange="onFilter()">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      <!-- Level -->
+      <div class="col-6 col-md-2">
+        <label class="f-label"><i class="fa-solid fa-layer-group me-1 text-primary"></i>Level</label>
+        <select id="f-level" class="form-select" onchange="onFilter()">
+          <option value="">All Levels</option>
+          <option value="100">100 Level</option>
+          <option value="200">200 Level</option>
+          <option value="300">300 Level</option>
+          <option value="400">400 Level</option>
+          <option value="500">500 Level</option>
+        </select>
+      </div>
+      <!-- Session Year -->
+      <div class="col-6 col-md-2">
+        <label class="f-label"><i class="fa-solid fa-calendar me-1 text-primary"></i>Session Year</label>
+        <select id="f-session" class="form-select" onchange="onFilter()">
+          <option value="">All Sessions</option>
+        </select>
+      </div>
+      <!-- Category -->
+      <div class="col-6 col-md-3">
+        <label class="f-label"><i class="fa-solid fa-tags me-1 text-primary"></i>Category</label>
+        <select id="f-cat" class="form-select" onchange="onFilter()">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <!-- Search -->
+      <div class="col-12 col-md-2">
+        <label class="f-label"><i class="fa-solid fa-magnifying-glass me-1 text-primary"></i>Search</label>
+        <input id="f-search" type="text" class="form-control" placeholder="Code, title, lecturer…" oninput="debounceFilter()"/>
+      </div>
+    </div>
+
+    <!-- Active filters pills -->
+    <div id="active-pills" class="d-flex flex-wrap gap-2 mt-3" style="display:none!important"></div>
+  </div>
+
+  <!-- RESULT BAR -->
+  <div class="result-bar">
+    <div id="result-info" class="result-count">
+      <div class="skel" style="width:180px"></div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button onclick="setView('table')" id="vb-table" class="vt-btn on">
+        <i class="fa-solid fa-table-list"></i><span class="d-none d-sm-inline">Table</span>
+      </button>
+      <button onclick="setView('cards')" id="vb-cards" class="vt-btn">
+        <i class="fa-solid fa-grip"></i><span class="d-none d-sm-inline">Cards</span>
+      </button>
+      <button onclick="setView('week')" id="vb-week" class="vt-btn">
+        <i class="fa-solid fa-calendar-week"></i><span class="d-none d-sm-inline">Week</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TABLE VIEW ── -->
+  <div id="view-table">
+    <div class="tbl-card">
+      <div class="table-responsive">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortBy('course_code')">Course Code <i class="fa-solid fa-sort ms-1" id="sort-course_code" style="opacity:.3;font-size:.7rem"></i></th>
+              <th>Title</th>
+              <th>Category</th>
+              <th class="sortable" onclick="sortBy('department')">Department <i class="fa-solid fa-sort ms-1" id="sort-department" style="opacity:.3;font-size:.7rem"></i></th>
+              <th class="sortable" onclick="sortBy('level')">Level <i class="fa-solid fa-sort ms-1" id="sort-level" style="opacity:.3;font-size:.7rem"></i></th>
+              <th>Lecturer</th>
+              <th>Venue</th>
+              <th>Session</th>
+              <th>Time Slots</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body">
+            <tr><td colspan="10"><div class="loading-box"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading timetables…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CARDS VIEW ── -->
+  <div id="view-cards" style="display:none">
+    <div id="cards-body" class="row g-3"></div>
+  </div>
+
+  <!-- ── WEEK VIEW ── -->
+  <div id="view-week" style="display:none">
+    <div class="wk-outer">
+      <div id="week-body" style="padding:3px"></div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="pagination" class="d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap"></div>
+
+</div><!-- /container -->
+
+<!-- ══ DETAIL MODAL ══ -->
+<div class="modal fade" id="detail-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title fw-bold" id="dm-title" style="font-family:'Playfair Display',serif;font-size:1.1rem"></h5>
+          <div id="dm-sub" class="text-muted mt-1" style="font-size:.8rem"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="dm-body" style="padding:20px"></div>
+      <div class="modal-footer" style="border-top:1px solid var(--border);padding:14px 20px">
+        <a href="/login" class="btn btn-primary btn-sm fw-semibold" style="border-radius:8px">
+          <i class="fa-solid fa-right-to-bracket me-2"></i>Login to Manage Timetables
+        </a>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" style="border-radius:8px">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TIMES = ['7:00','8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+let DATA = [];          // current server results
+let page = 1;
+const PER = 20;
+let currentView = 'table';
+let sortKey = 'course_code';
+let sortDir = 1;        // 1=asc -1=desc
+let debTimer = null;
+
+// ── INIT ────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  await Promise.all([loadDepts(), loadCats(), loadSessions()]);
+  await doFetch();
+});
+
+async function loadDepts() {
+  const r = await fetch('/api/departments');
+  const d = await r.json();
+  const sel = document.getElementById('f-dept');
+  (d.departments || []).forEach(dep => {
+    sel.appendChild(new Option(dep.name, dep.id));
+  });
+}
+async function loadCats() {
+  const r = await fetch('/api/categories');
+  const d = await r.json();
+  const sel = document.getElementById('f-cat');
+  (d.categories || []).forEach(c => {
+    sel.appendChild(new Option(c.name, c.id));
+  });
+}
+async function loadSessions() {
+  try {
+    const r = await fetch('/api/sessions');
+    const d = await r.json();
+    const sel = document.getElementById('f-session');
+    (d.sessions || []).forEach(s => sel.appendChild(new Option(s, s)));
+  } catch(e) {
+    // fallback static list
+    ['2024/2025','2023/2024','2022/2023'].forEach(s => {
+      document.getElementById('f-session').appendChild(new Option(s, s));
+    });
+  }
+}
+
+// ── FETCH (server-side filtering) ──────────────────────────────
+async function doFetch() {
+  showSkeleton();
+  const dept    = document.getElementById('f-dept').value;
+  const level   = document.getElementById('f-level').value;
+  const session = document.getElementById('f-session').value;
+  const cat     = document.getElementById('f-cat').value;
+  const search  = document.getElementById('f-search').value.trim();
+
+  const params = new URLSearchParams();
+  if (dept)    params.set('dept',    dept);
+  if (level)   params.set('level',  level);
+  if (session) params.set('session', session);
+  if (cat)     params.set('cat',    cat);
+  if (search)  params.set('q',      search);
+
+  try {
+    const r = await fetch(`/api/schedule?${params}`);
+    const d = await r.json();
+    DATA = d.timetables || [];
+  } catch(e) {
+    DATA = [];
+  }
+
+  page = 1;
+  updateActivePills();
+  render();
+}
+
+function onFilter()        { page = 1; doFetch(); }
+function debounceFilter()  { clearTimeout(debTimer); debTimer = setTimeout(doFetch, 380); }
+
+function clearAll() {
+  ['f-dept','f-level','f-session','f-cat'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-search').value = '';
+  doFetch();
+}
+
+// ── ACTIVE PILLS ────────────────────────────────────────────────
+function updateActivePills() {
+  const pills = document.getElementById('active-pills');
+  const filters = [
+    { id:'f-dept',    label: labelOf('f-dept'),    key:'dept' },
+    { id:'f-level',   label: 'Level '+document.getElementById('f-level').value,   key:'level' },
+    { id:'f-session', label: document.getElementById('f-session').value,  key:'session' },
+    { id:'f-cat',     label: labelOf('f-cat'),     key:'cat' },
+    { id:'f-search',  label: '"'+document.getElementById('f-search').value+'"', key:'q' },
+  ].filter(f => document.getElementById(f.id).value);
+
+  if (!filters.length) { pills.style.display = 'none'; return; }
+  pills.style.display = 'flex';
+  pills.innerHTML = filters.map(f => `
+    <span class="active-filter-pill">
+      ${f.label}
+      <button onclick="clearFilter('${f.id}')" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+    </span>`).join('');
+}
+
+function labelOf(id) {
+  const sel = document.getElementById(id);
+  return sel.options[sel.selectedIndex]?.text || '';
+}
+function clearFilter(id) {
+  document.getElementById(id).value = '';
+  doFetch();
+}
+
+// ── RENDER ──────────────────────────────────────────────────────
+function render() {
+  // Sort
+  const sorted = [...DATA].sort((a,b) => {
+    const av = (a[sortKey]||'').toString().toLowerCase();
+    const bv = (b[sortKey]||'').toString().toLowerCase();
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  const total  = sorted.length;
+  const pages  = Math.max(1, Math.ceil(total / PER));
+  if (page > pages) page = 1;
+  const slice  = sorted.slice((page-1)*PER, page*PER);
+
+  // Result info
+  const dept    = document.getElementById('f-dept').value;
+  const level   = document.getElementById('f-level').value;
+  const session = document.getElementById('f-session').value;
+  const cat     = document.getElementById('f-cat').value;
+  const search  = document.getElementById('f-search').value.trim();
+  const hasFilter = dept||level||session||cat||search;
+
+  document.getElementById('result-info').innerHTML =
+    `<strong>${total}</strong> approved timetable${total!==1?'s':''} found`
+    + (hasFilter ? ' <span class="text-muted">(filtered)</span>' : '');
+
+  if (currentView === 'table') renderTable(slice);
+  else if (currentView === 'cards') renderCards(slice);
+  else renderWeek(sorted);   // week shows all, no pagination
+
+  renderPagination(total, pages);
+}
+
+// ── TABLE ────────────────────────────────────────────────────────
+function renderTable(items) {
+  const body = document.getElementById('tbl-body');
+  if (!items.length) {
+    body.innerHTML = `<tr><td colspan="10">
+      <div class="empty-box">
+        <i class="fa-solid fa-calendar-xmark"></i>
+        <p class="fw-semibold mb-1">No timetables match your filters</p>
+        <p style="font-size:.875rem;color:var(--muted)">Try removing some filters or selecting "All" options.</p>
+        <button onclick="clearAll()" class="btn btn-primary btn-sm mt-2" style="border-radius:8px"><i class="fa-solid fa-rotate-left me-2"></i>Clear All Filters</button>
+      </div></td></tr>`;
+    return;
+  }
+  body.innerHTML = items.map(tt => `
+    <tr onclick="showDetail(${tt.id})">
+      <td>
+        <div class="fw-bold" style="color:var(--primary);font-size:.9rem">${tt.course_code}</div>
+        <div style="font-size:.7rem;color:var(--muted)">${tt.semester} Sem</div>
+      </td>
+      <td>
+        <div class="fw-semibold" style="font-size:.855rem;max-width:190px;line-height:1.4">${tt.title}</div>
+        ${tt.course_title && tt.course_title !== tt.title
+          ? `<div style="font-size:.74rem;color:var(--muted)">${tt.course_title}</div>` : ''}
+      </td>
+      <td>
+        <span class="cat-pill" style="background:${tt.category?.color||'#2563eb'}18;color:${tt.category?.color||'#2563eb'};border:1px solid ${tt.category?.color||'#2563eb'}28">
+          <i class="fa-solid ${tt.category?.icon||'fa-calendar'}" style="font-size:9px"></i>${tt.category?.name||'—'}
+        </span>
+      </td>
+      <td style="font-size:.84rem;max-width:150px">${tt.department||'—'}</td>
+      <td>
+        <span class="fw-bold" style="font-size:.84rem;background:#f1f5f9;padding:3px 10px;border-radius:16px;color:var(--text)">L${tt.level}</span>
+      </td>
+      <td style="font-size:.84rem;max-width:140px;color:var(--text)">${tt.lecturer||'<span style="color:var(--muted)">TBA</span>'}</td>
+      <td style="font-size:.82rem;color:var(--muted);max-width:120px">${tt.venue||'TBA'}</td>
+      <td style="font-size:.8rem;color:var(--muted);white-space:nowrap">${tt.session_year}</td>
+      <td>
+        ${(tt.slots||[]).slice(0,2).map(s =>
+          `<span class="slot-chip"><i class="fa-solid fa-clock" style="font-size:8px"></i>${s.day.substring(0,3)} ${s.start_time}–${s.end_time}</span>`
+        ).join('')}
+        ${(tt.slots||[]).length > 2
+          ? `<span class="slot-chip" style="background:#f8fafc;color:var(--muted);border-color:var(--border)">+${tt.slots.length-2}</span>` : ''}
+        ${!(tt.slots||[]).length ? '<span style="font-size:.8rem;color:var(--muted)">—</span>' : ''}
+      </td>
+      <td>
+        <button onclick="event.stopPropagation();showDetail(${tt.id})" class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:.75rem;white-space:nowrap">
+          <i class="fa-solid fa-eye me-1"></i>Details
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+// ── CARDS ────────────────────────────────────────────────────────
+function renderCards(items) {
+  const body = document.getElementById('cards-body');
+  if (!items.length) {
+    body.innerHTML = `<div class="col-12"><div class="empty-box"><i class="fa-solid fa-calendar-xmark"></i><p class="fw-semibold mb-1">No timetables match your filters</p><button onclick="clearAll()" class="btn btn-primary btn-sm mt-2" style="border-radius:8px"><i class="fa-solid fa-rotate-left me-2"></i>Clear Filters</button></div></div>`;
+    return;
+  }
+  body.innerHTML = items.map(tt => `
+    <div class="col-md-6 col-xl-4">
+      <div class="tt-card" onclick="showDetail(${tt.id})">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="tt-cat-icon" style="background:${tt.category?.color||'#2563eb'}18;border:1px solid ${tt.category?.color||'#2563eb'}28">
+            <i class="fa-solid ${tt.category?.icon||'fa-calendar'}" style="color:${tt.category?.color||'#2563eb'};font-size:18px"></i>
+          </div>
+          <div class="flex-fill">
+            <div class="fw-bold" style="color:var(--primary);font-size:.95rem">${tt.course_code}</div>
+            <div style="font-size:.73rem;color:var(--muted)">${tt.category?.name||'—'} · ${tt.semester} Sem</div>
+          </div>
+          <span class="badge-ok"><i class="fa-solid fa-circle-check me-1" style="font-size:9px"></i>Approved</span>
+        </div>
+        <div class="fw-semibold mb-3" style="font-size:.875rem;line-height:1.4;color:var(--text)">${tt.title}</div>
+        <div class="mb-3" style="font-size:.8rem;color:var(--muted)">
+          <div class="mb-1"><i class="fa-solid fa-building-columns me-2 text-primary" style="width:14px"></i>${tt.department||'—'} &middot; Level ${tt.level}</div>
+          <div class="mb-1"><i class="fa-solid fa-user-tie me-2 text-primary" style="width:14px"></i>${tt.lecturer||'TBA'}</div>
+          <div class="mb-1"><i class="fa-solid fa-location-dot me-2 text-primary" style="width:14px"></i>${tt.venue||'TBA'}</div>
+          <div><i class="fa-solid fa-calendar me-2 text-primary" style="width:14px"></i>${tt.session_year}</div>
+        </div>
+        <div class="d-flex flex-wrap">
+          ${(tt.slots||[]).slice(0,3).map(s =>
+            `<span class="slot-chip"><i class="fa-solid fa-clock" style="font-size:8px"></i>${s.day.substring(0,3)} ${s.start_time}–${s.end_time}</span>`
+          ).join('')}
+          ${(tt.slots||[]).length > 3
+            ? `<span class="slot-chip" style="background:#f8fafc;color:var(--muted);border-color:var(--border)">+${tt.slots.length-3} more</span>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── WEEK ─────────────────────────────────────────────────────────
+function renderWeek(items) {
+  const body = document.getElementById('week-body');
+  if (!items.length) {
+    body.innerHTML = `<div class="empty-box"><i class="fa-solid fa-calendar-xmark"></i><p class="fw-semibold mb-1">No approved timetables</p><p style="font-size:.875rem">Adjust your filters to see results.</p></div>`;
+    return;
+  }
+  // Build slot map
+  const sm = {};
+  items.forEach(tt => (tt.slots||[]).forEach(s => {
+    const k = `${s.day}|${s.start_time}`;
+    (sm[k] = sm[k] || []).push({ ...s, code: tt.course_code, title: tt.title, id: tt.id, color: tt.category?.color||'#2563eb' });
+  }));
+
+  let html = `<div class="wk-grid">
+    <div class="wk-time" style="justify-content:center;background:#f8fafc;font-weight:700;font-size:.68rem;color:var(--muted)"><i class="fa-solid fa-clock" style="font-size:9px"></i></div>
+    ${DAYS.map(d => `<div class="wk-hdr">${d.substring(0,3)}</div>`).join('')}`;
+  TIMES.forEach(t => {
+    html += `<div class="wk-time">${t}</div>`;
+    DAYS.forEach(day => {
+      const evs = sm[`${day}|${t}`] || [];
+      html += `<div class="wk-cell">${evs.map(e =>
+        `<div class="wk-ev" style="border-left-color:${e.color};background:${e.color}" onclick="showDetail(${e.id})" title="${e.code}: ${e.title}">
+          <div>${e.code}</div>
+          ${e.room ? `<div style="font-size:8px;opacity:.85">${e.room}</div>` : ''}
+        </div>`).join('')}</div>`;
+    });
+  });
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+// ── PAGINATION ───────────────────────────────────────────────────
+function renderPagination(total, pages) {
+  const el = document.getElementById('pagination');
+  if (pages <= 1 || currentView === 'week') { el.innerHTML = ''; return; }
+  let html = `<button class="pag-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}><i class="fa-solid fa-chevron-left"></i></button>`;
+  for (let i = 1; i <= pages; i++) {
+    if (i===1 || i===pages || Math.abs(i-page)<=1)
+      html += `<button class="pag-btn ${i===page?'on':''}" onclick="goPage(${i})">${i}</button>`;
+    else if (Math.abs(i-page)===2)
+      html += `<span style="color:var(--muted);padding:0 4px">…</span>`;
+  }
+  html += `<button class="pag-btn" onclick="goPage(${page+1})" ${page===pages?'disabled':''}><i class="fa-solid fa-chevron-right"></i></button>`;
+  el.innerHTML = html;
+}
+function goPage(p) {
+  page = p;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── VIEW TOGGLE ──────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-table').style.display = v==='table' ? '' : 'none';
+  document.getElementById('view-cards').style.display = v==='cards' ? '' : 'none';
+  document.getElementById('view-week').style.display  = v==='week'  ? '' : 'none';
+  ['table','cards','week'].forEach(x => {
+    document.getElementById('vb-'+x).classList.toggle('on', x===v);
+  });
+  render();
+}
+
+// ── SORT ─────────────────────────────────────────────────────────
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = 1; }
+  // update icons
+  ['course_code','department','level'].forEach(k => {
+    const ic = document.getElementById('sort-'+k);
+    if (!ic) return;
+    ic.className = 'fa-solid ms-1 ' + (k===sortKey ? (sortDir===1?'fa-sort-up':'fa-sort-down') : 'fa-sort');
+    ic.style.opacity = k===sortKey ? '1' : '.3';
+    ic.style.color   = k===sortKey ? 'var(--primary)' : '';
+    ic.style.fontSize = '.7rem';
+  });
+  render();
+}
+
+// ── SKELETON LOADER ──────────────────────────────────────────────
+function showSkeleton() {
+  if (currentView === 'table') {
+    document.getElementById('tbl-body').innerHTML =
+      Array.from({length:6}, () => `<tr>${Array.from({length:10}, () =>
+        `<td><div class="skel" style="width:${60+Math.random()*60}px"></div></td>`).join('')}</tr>`).join('');
+  }
+  document.getElementById('result-info').innerHTML = '<div class="skel" style="width:160px"></div>';
+}
+
+// ── DETAIL MODAL ─────────────────────────────────────────────────
+function showDetail(id) {
+  const tt = DATA.find(t => t.id === id);
+  if (!tt) return;
+  document.getElementById('dm-title').textContent = `${tt.course_code} — ${tt.title}`;
+  document.getElementById('dm-sub').textContent   = `${tt.department} · Level ${tt.level} · ${tt.semester} Semester · ${tt.session_year}`;
+  document.getElementById('dm-body').innerHTML = `
+    <div class="row g-3 mb-4">
+      <div class="col-sm-6">
+        <div class="dt-block">
+          <div class="dt-label">Course Info</div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-hashtag"></i></span><div><div class="dt-lbl">Code</div><div class="dt-val">${tt.course_code}</div></div></div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-book"></i></span><div><div class="dt-lbl">Title</div><div class="dt-val">${tt.course_title||tt.title}</div></div></div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-tags"></i></span><div><div class="dt-lbl">Category</div><div class="dt-val">
+            <span class="cat-pill" style="background:${tt.category?.color||'#2563eb'}18;color:${tt.category?.color||'#2563eb'};border:1px solid ${tt.category?.color||'#2563eb'}28">
+              <i class="fa-solid ${tt.category?.icon||'fa-calendar'}" style="font-size:9px"></i>${tt.category?.name||'—'}
+            </span>
+          </div></div></div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="dt-block">
+          <div class="dt-label">Academic Details</div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-building-columns"></i></span><div><div class="dt-lbl">Department</div><div class="dt-val">${tt.department||'—'}</div></div></div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-layer-group"></i></span><div><div class="dt-lbl">Level</div><div class="dt-val">Level ${tt.level}</div></div></div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-calendar-half"></i></span><div><div class="dt-lbl">Semester / Session</div><div class="dt-val">${tt.semester} Semester · ${tt.session_year}</div></div></div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="dt-block">
+          <div class="dt-label">Delivery</div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-user-tie"></i></span><div><div class="dt-lbl">Lecturer</div><div class="dt-val">${tt.lecturer||'TBA'}</div></div></div>
+          <div class="dt-row"><span class="dt-icon"><i class="fa-solid fa-location-dot"></i></span><div><div class="dt-lbl">Venue</div><div class="dt-val">${tt.venue||'TBA'}</div></div></div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="dt-block" style="background:var(--green-l);border-color:var(--green-b)">
+          <div class="dt-label" style="color:var(--green)">Status</div>
+          <div class="mt-1"><span class="badge-ok"><i class="fa-solid fa-circle-check me-1"></i>Approved &amp; Published</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:.7rem;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">
+        Time Slots <span style="color:var(--primary)">(${(tt.slots||[]).length})</span>
+      </div>
+      ${!(tt.slots||[]).length
+        ? `<p class="text-muted text-center py-3" style="font-size:.875rem">No time slots recorded for this timetable.</p>`
+        : `<div class="table-responsive"><table class="tbl">
+            <thead><tr><th>DAY</th><th>START</th><th>END</th><th>ROOM</th><th>NOTE</th></tr></thead>
+            <tbody>${tt.slots.map(s => `<tr>
+              <td><span class="slot-chip"><i class="fa-solid fa-calendar-day" style="font-size:8px"></i>${s.day}</span></td>
+              <td class="fw-semibold" style="color:var(--primary)">${s.start_time}</td>
+              <td class="fw-semibold" style="color:var(--primary)">${s.end_time}</td>
+              <td style="color:var(--muted)">${s.room||'—'}</td>
+              <td style="color:var(--muted)">${s.note||'—'}</td>
+            </tr>`).join('')}</tbody>
+           </table></div>`}
+    </div>`;
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('detail-modal')).show();
+}
+</script>
+</body>
+</html>

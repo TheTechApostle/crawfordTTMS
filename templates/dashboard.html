@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Crawford TTMS — Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+{% raw %}
+:root{
+  --primary:#2563eb;--primary-dark:#1e40af;--primary-light:#eff6ff;--primary-border:#bfdbfe;
+  --success:#16a34a;--warning:#d97706;--danger:#dc2626;--violet:#7c3aed;
+  --sidebar-w:260px;
+  --body-bg:#f1f5f9;--card-bg:#ffffff;--border-clr:#e2e8f0;
+  --text-main:#0f172a;--text-muted:#64748b;--text-light:#94a3b8;
+}
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--body-bg);color:var(--text-main);margin:0;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.pf{font-family:'Playfair Display',serif}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:var(--card-bg);
+  border-right:1px solid var(--border-clr);
+  position:fixed;top:0;left:0;bottom:0;z-index:200;
+  display:flex;flex-direction:column;overflow-y:auto;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:2px 0 16px rgba(0,0,0,.06);
+}
+#sidebar::-webkit-scrollbar{width:3px}
+#main{margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
+@media(max-width:991px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+}
+
+/* SIDEBAR TOP */
+.sb-logo{background:linear-gradient(135deg,var(--primary-dark),var(--primary));padding:18px 20px;display:flex;align-items:center;gap:12px}
+.sb-logo-icon{width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo-text .title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#fff;letter-spacing:.03em}
+.sb-logo-text .sub{font-size:8px;color:rgba(255,255,255,.6);letter-spacing:.18em;margin-top:1px}
+
+/* SIDEBAR USER */
+.sb-user{padding:14px 16px;border-bottom:1px solid var(--border-clr);display:flex;align-items:center;gap:11px}
+.sb-av{width:38px;height:38px;border-radius:50%;background:var(--primary-light);color:var(--primary);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid var(--primary-border)}
+
+/* NAV ITEMS */
+.nav-section-label{font-size:9px;font-weight:700;letter-spacing:.2em;color:var(--text-light);padding:12px 18px 4px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted);margin:1px 8px;transition:.2s;text-decoration:none}
+.nav-item:hover{background:var(--primary-light);color:var(--primary)}
+.nav-item.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+.nav-item .ni-icon{width:18px;text-align:center;flex-shrink:0;font-size:14px}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+
+/* ── TOPBAR ── */
+#topbar{height:58px;background:var(--card-bg);border-bottom:1px solid var(--border-clr);display:flex;align-items:center;gap:12px;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+
+/* ── CONTENT ── */
+#content{flex:1;padding:24px;overflow-y:auto}
+.panel{display:none}.panel.active{display:block}
+
+/* ── CARDS ── */
+.card{border:1px solid var(--border-clr);border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+.card-header-custom{padding:16px 20px;border-bottom:1px solid var(--border-clr);display:flex;align-items:center;justify-content:between;gap:12px}
+
+/* STAT CARDS */
+.stat-card{border-radius:16px;border:1px solid var(--border-clr);background:var(--card-bg);padding:20px;transition:.25s}
+.stat-card:hover{box-shadow:0 4px 16px rgba(37,99,235,.1);border-color:var(--primary-border)}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* BUTTONS */
+.btn{border-radius:10px;font-weight:500;font-size:.875rem;transition:.22s}
+.btn-primary{background:linear-gradient(135deg,var(--primary-dark),var(--primary));border:none}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,235,.3)}
+.btn-success{background:linear-gradient(135deg,#15803d,var(--success));border:none}
+.btn-danger{background:linear-gradient(135deg,#b91c1c,var(--danger));border:none}
+.btn-warning{background:linear-gradient(135deg,#b45309,var(--warning));border:none;color:#fff}
+.btn-warning:hover{color:#fff}
+.btn-outline-primary{border-color:var(--primary-border);color:var(--primary)}
+.btn-outline-primary:hover{background:var(--primary-light)}
+.btn-sm{padding:.35rem .75rem;font-size:.8rem;border-radius:8px}
+
+/* STATUS BADGES */
+.badge-pending{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.badge-approved{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.badge-rejected{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.03em}
+
+/* INPUTS */
+.form-control,.form-select{border-radius:10px;border:1.5px solid var(--border-clr);font-size:.875rem;padding:.55rem .875rem;transition:.2s;background:#fff}
+.form-control:focus,.form-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1);background:#fff}
+.form-label{font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+
+/* TABLE */
+.table-custom{font-size:.85rem}
+.table-custom th{font-size:.75rem;font-weight:700;letter-spacing:.08em;color:var(--text-muted);background:#f8fafc;border-bottom:2px solid var(--border-clr);padding:11px 14px;white-space:nowrap}
+.table-custom td{padding:12px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle;color:var(--text-main)}
+.table-custom tbody tr:hover td{background:#fafbff}
+.table-custom tbody tr:last-child td{border-bottom:none}
+
+/* MODAL */
+.modal-content{border-radius:20px;border:none;box-shadow:0 24px 64px rgba(0,0,0,.15)}
+.modal-header{border-bottom:1px solid var(--border-clr);padding:20px 24px}
+.modal-body{padding:24px}
+.modal-footer{border-top:1px solid var(--border-clr);padding:16px 24px}
+
+/* AVATAR */
+.user-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+
+/* WEEK GRID */
+.wk-grid{display:grid;grid-template-columns:70px repeat(6,1fr);gap:2px;font-size:11px;min-width:600px}
+.wk-hdr{background:#f8fafc;border:1px solid var(--border-clr);border-radius:8px;padding:7px 4px;text-align:center;font-weight:700;font-size:10px;letter-spacing:.08em;color:var(--text-muted)}
+.wk-time{background:#f8fafc;border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;color:var(--text-muted);font-size:10px;display:flex;align-items:center}
+.wk-cell{background:#fff;border:1px solid #f1f5f9;border-radius:6px;min-height:36px}
+.wk-event{border-left:3px solid;border-radius:4px;padding:4px 6px;font-size:9px;font-weight:700;margin:2px;color:#fff}
+
+/* COLOR SWATCH */
+.csw{width:30px;height:30px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:.2s;flex-shrink:0}
+.csw.sel{border-color:#1e40af;box-shadow:0 0 0 2px #bfdbfe}
+
+/* TOAST */
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;min-width:300px}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:52px 20px;color:var(--text-muted)}
+.empty-state .empty-icon{font-size:48px;color:#e2e8f0;margin-bottom:14px}
+
+/* SLOT ROW */
+.slot-row{background:#f8fafc;border:1px solid var(--border-clr);border-radius:10px;padding:12px}
+
+/* NOTIFICATION ITEM */
+.notif-item{padding:14px 18px;border-radius:12px;border:1px solid var(--border-clr);background:#fff;transition:.2s}
+.notif-item:hover{border-color:var(--primary-border);background:var(--primary-light)}
+.notif-item.unread{border-left:3px solid var(--primary)}
+
+/* RESPONSIVE adjustments */
+@media(max-width:575px){
+  #content{padding:14px}
+  .stat-card{padding:14px}
+}
+{% endraw %}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside id="sidebar">
+  <!-- Logo -->
+  <div class="sb-logo">
+    <div class="sb-logo-icon"><i class="fa-solid fa-graduation-cap text-white" style="font-size:16px"></i></div>
+    <div class="sb-logo-text"><div class="title">Crawford TTMS</div><div class="sub">TIMETABLE SYSTEM</div></div>
+  </div>
+
+  <!-- User Info -->
+  <div class="sb-user">
+    <div class="sb-av" id="sb-av">?</div>
+    <div class="flex-fill overflow-hidden">
+      <div class="fw-semibold text-truncate" id="sb-name" style="font-size:13px;color:var(--text-main)">…</div>
+      <div id="sb-sub" class="text-truncate" style="font-size:10px;color:var(--text-muted)"></div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-fill py-2">
+    <div class="nav-section-label">Main</div>
+    <a class="nav-item active" onclick="go('overview')" data-panel="overview">
+      <i class="fa-solid fa-gauge-high ni-icon"></i>Overview
+    </a>
+    <a class="nav-item" onclick="go('timetables')" data-panel="timetables">
+      <i class="fa-solid fa-calendar-days ni-icon"></i>My Timetables
+      <span class="nav-badge d-none" id="pnd-badge">0</span>
+    </a>
+    <a class="nav-item" onclick="go('schedule')" data-panel="schedule">
+      <i class="fa-solid fa-calendar-week ni-icon"></i>Weekly Schedule
+    </a>
+
+    <div id="adm-nav" class="d-none">
+      <div class="nav-section-label mt-1">Administration</div>
+      <a class="nav-item" onclick="go('all-tt')" data-panel="all-tt">
+        <i class="fa-solid fa-table-list ni-icon"></i>All Timetables
+        <span class="nav-badge d-none" id="pnd-badge2">0</span>
+      </a>
+      <a class="nav-item" onclick="go('users')" data-panel="users">
+        <i class="fa-solid fa-users-gear ni-icon"></i>Student Access
+      </a>
+      <a class="nav-item" onclick="go('departments')" data-panel="departments">
+        <i class="fa-solid fa-building-columns ni-icon"></i>Departments
+      </a>
+      <a class="nav-item" onclick="go('categories')" data-panel="categories">
+        <i class="fa-solid fa-tags ni-icon"></i>Categories
+      </a>
+      <a class="nav-item" onclick="go('reports')" data-panel="reports">
+        <i class="fa-solid fa-chart-bar ni-icon"></i>Reports
+      </a>
+    </div>
+
+    <div class="nav-section-label mt-1">Account</div>
+    <a class="nav-item" onclick="go('notifs')" data-panel="notifs">
+      <i class="fa-solid fa-bell ni-icon"></i>Notifications
+      <span class="nav-badge d-none" id="notif-badge">0</span>
+    </a>
+    <a class="nav-item" onclick="go('profile')" data-panel="profile">
+      <i class="fa-solid fa-user-circle ni-icon"></i>My Profile
+    </a>
+    <a class="nav-item text-danger" onclick="doLogout()">
+      <i class="fa-solid fa-right-from-bracket ni-icon"></i>Sign Out
+    </a>
+  </nav>
+
+  <div class="px-3 py-3 border-top text-center" style="border-color:var(--border-clr)!important">
+    <div style="font-size:9px;color:var(--text-light);letter-spacing:.1em">POWERED BY</div>
+    <div class="fw-bold pf" style="font-size:12px;color:var(--primary);margin-top:2px">Crawford University</div>
+  </div>
+</aside>
+
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <button class="btn btn-light btn-sm d-lg-none me-1" onclick="toggleSidebar()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="flex-fill">
+      <div class="fw-semibold" id="pg-title" style="font-size:15px;color:var(--text-main)">Overview</div>
+      <div id="pg-sub" style="font-size:11px;color:var(--text-muted)">Dashboard</div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Search -->
+      <div class="input-group input-group-sm d-none d-md-flex" style="width:210px">
+        <span class="input-group-text bg-white border-end-0" style="border-radius:10px 0 0 10px"><i class="fa-solid fa-magnifying-glass text-muted" style="font-size:12px"></i></span>
+        <input id="g-search" type="text" class="form-control border-start-0" placeholder="Search timetables…" style="border-radius:0 10px 10px 0" onkeydown="if(event.key==='Enter')gSearch()"/>
+      </div>
+      <!-- Notification bell -->
+      <button onclick="go('notifs')" class="btn btn-light btn-sm position-relative" style="border-radius:10px">
+        <i class="fa-solid fa-bell text-secondary"></i>
+        <span id="tb-dot" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:8px;padding:3px 5px">!</span>
+      </button>
+      <!-- New Timetable -->
+      <button onclick="openAddTT()" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-plus me-1"></i><span class="d-none d-sm-inline">New Timetable</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ──────────────────────────────
+         OVERVIEW
+    ────────────────────────────── -->
+    <div id="panel-overview" class="panel active">
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4" id="stat-row"></div>
+
+      <!-- Welcome Banner -->
+      <div class="card mb-4 border-0 overflow-hidden" style="background:linear-gradient(135deg,#1e40af 0%,#2563eb 60%,#3b82f6 100%)">
+        <div class="card-body p-4 text-white d-flex align-items-center gap-4">
+          <div class="user-av flex-shrink-0" id="wc-av" style="width:52px;height:52px;font-size:18px;background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.3)">?</div>
+          <div class="flex-fill">
+            <h4 class="fw-bold mb-1 pf">Welcome back, <span id="wc-name">…</span></h4>
+            <p id="wc-sub" class="mb-0 opacity-75" style="font-size:.875rem"></p>
+          </div>
+          <button onclick="openAddTT()" class="btn btn-light btn-sm d-none d-md-flex align-items-center gap-2 flex-shrink-0" style="border-radius:10px">
+            <i class="fa-solid fa-plus"></i>Add Timetable
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Recent Timetables -->
+        <div class="col-lg-8">
+          <div class="card h-100">
+            <div class="card-body p-0">
+              <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom">
+                <h6 class="fw-bold mb-0" style="color:var(--text-main)"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Recent Timetables</h6>
+                <button onclick="go('timetables')" class="btn btn-outline-primary btn-sm">View All</button>
+              </div>
+              <div id="ov-recent" class="px-4 py-2"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Side Widget -->
+        <div class="col-lg-4">
+          <div class="card h-100">
+            <div class="card-body p-0">
+              <div id="ov-side"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Chart -->
+      <div class="card mt-4 admin-el d-none">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>Timetables by Category</h6>
+          <canvas id="ov-chart" style="max-height:200px"></canvas>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         MY TIMETABLES
+    ────────────────────────────── -->
+    <div id="panel-timetables" class="panel">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold pf mb-0">Timetables</h4>
+          <p id="tt-label" class="text-muted mb-0" style="font-size:.85rem">…</p>
+        </div>
+        <button onclick="openAddTT()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>New Timetable</button>
+      </div>
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body py-3">
+          <div class="row g-2">
+            <div class="col-sm-4 col-lg-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted" style="font-size:11px"></i></span>
+                <input id="tt-q" type="text" class="form-control border-start-0" placeholder="Search…" oninput="loadTT()"/>
+              </div>
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+              <select id="tt-st" class="form-select form-select-sm" onchange="loadTT()">
+                <option value="">All Status</option>
+                <option>pending</option><option>approved</option><option>rejected</option>
+              </select>
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+              <select id="tt-cat" class="form-select form-select-sm" onchange="loadTT()">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+            <div class="col-6 col-sm-3 col-lg-2">
+              <select id="tt-lv" class="form-select form-select-sm" onchange="loadTT()">
+                <option value="">All Levels</option>
+                <option>100</option><option>200</option><option>300</option><option>400</option><option>500</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <button onclick="loadTT()" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tt-grid" class="row g-3"></div>
+      <div id="tt-pages" class="d-flex justify-content-center gap-2 mt-4"></div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         WEEKLY SCHEDULE
+    ────────────────────────────── -->
+    <div id="panel-schedule" class="panel">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold pf mb-0">Weekly Schedule</h4>
+          <p class="text-muted mb-0" style="font-size:.85rem">Approved timetables — visual grid</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <select id="sch-dept" class="form-select form-select-sm" style="width:160px" onchange="loadSchedule()"><option value="">All Departments</option></select>
+          <select id="sch-lv"   class="form-select form-select-sm" style="width:110px" onchange="loadSchedule()"><option value="">All Levels</option><option>100</option><option>200</option><option>300</option><option>400</option><option>500</option></select>
+          <select id="sch-cat"  class="form-select form-select-sm" style="width:140px" onchange="loadSchedule()"><option value="">All Categories</option></select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body overflow-auto p-3"><div id="sch-grid"></div></div>
+      </div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         ALL TIMETABLES (ADMIN)
+    ────────────────────────────── -->
+    <div id="panel-all-tt" class="panel admin-el">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold pf mb-0">All Timetables</h4>
+          <p id="att-label" class="text-muted mb-0" style="font-size:.85rem">…</p>
+        </div>
+      </div>
+      <div class="card mb-4">
+        <div class="card-body py-3">
+          <div class="row g-2">
+            <div class="col-sm-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted" style="font-size:11px"></i></span>
+                <input id="att-q" type="text" class="form-control border-start-0" placeholder="Search…" oninput="loadAllTT()"/>
+              </div>
+            </div>
+            <div class="col-6 col-sm-2"><select id="att-st" class="form-select form-select-sm" onchange="loadAllTT()"><option value="">All Status</option><option>pending</option><option>approved</option><option>rejected</option></select></div>
+            <div class="col-6 col-sm-2"><select id="att-cat" class="form-select form-select-sm" onchange="loadAllTT()"><option value="">All Categories</option></select></div>
+            <div class="col-6 col-sm-2"><select id="att-dept" class="form-select form-select-sm" onchange="loadAllTT()"><option value="">All Depts</option></select></div>
+            <div class="col-6 col-sm-2"><select id="att-lv" class="form-select form-select-sm" onchange="loadAllTT()"><option value="">All Levels</option><option>100</option><option>200</option><option>300</option><option>400</option><option>500</option></select></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table table-custom mb-0">
+            <thead><tr>
+              <th>COURSE</th><th>DEPARTMENT / LEVEL</th><th>CATEGORY</th>
+              <th>SUBMITTED BY</th><th>STATUS</th><th>DATE</th><th>ACTIONS</th>
+            </tr></thead>
+            <tbody id="att-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="att-pages" class="d-flex justify-content-center gap-2 mt-3"></div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         STUDENTS / USERS (ADMIN)
+    ────────────────────────────── -->
+    <div id="panel-users" class="panel admin-el">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold pf mb-0">Student Management</h4>
+          <p class="text-muted mb-0" style="font-size:.85rem">Only administrators can create student accounts</p>
+        </div>
+        <button onclick="openUserModal()" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus me-1"></i>Add Student Access</button>
+      </div>
+      <!-- Filter -->
+      <div class="card mb-4">
+        <div class="card-body py-3">
+          <div class="row g-2">
+            <div class="col-sm-5 col-md-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted" style="font-size:11px"></i></span>
+                <input id="usr-q" type="text" class="form-control border-start-0" placeholder="Search name or email…" oninput="loadUsers()"/>
+              </div>
+            </div>
+            <div class="col-6 col-sm-3"><select id="usr-dept" class="form-select form-select-sm" onchange="loadUsers()"><option value="">All Departments</option></select></div>
+            <div class="col-6 col-sm-2"><select id="usr-role" class="form-select form-select-sm" onchange="loadUsers()"><option value="">All Roles</option><option value="student">Students</option><option value="admin">Admins</option></select></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table table-custom mb-0">
+            <thead><tr><th>USER</th><th>DEPARTMENT</th><th>LEVEL</th><th>ROLE</th><th>STATUS</th><th>CREATED BY</th><th>DATE</th><th>ACTIONS</th></tr></thead>
+            <tbody id="usr-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         DEPARTMENTS (ADMIN)
+    ────────────────────────────── -->
+    <div id="panel-departments" class="panel admin-el">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold pf mb-0">Departments</h4>
+          <p class="text-muted mb-0" style="font-size:.85rem">Manage university departments — used in student registration and timetables</p>
+        </div>
+        <button onclick="openDeptModal()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Add Department</button>
+      </div>
+      <div id="dept-grid" class="row g-3"></div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         CATEGORIES (ADMIN)
+    ────────────────────────────── -->
+    <div id="panel-categories" class="panel admin-el">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 class="fw-bold pf mb-0">Categories</h4>
+          <p class="text-muted mb-0" style="font-size:.85rem">Manage timetable categories — students choose from these when submitting</p>
+        </div>
+        <button onclick="openCatModal()" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>New Category</button>
+      </div>
+      <div id="cat-grid" class="row g-3"></div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         REPORTS (ADMIN)
+    ────────────────────────────── -->
+    <div id="panel-reports" class="panel admin-el">
+      <h4 class="fw-bold pf mb-4">Reports & Analytics</h4>
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="card h-100"><div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Status Distribution</h6>
+            <canvas id="rpt-donut" style="max-height:200px"></canvas>
+          </div></div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100"><div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>By Category</h6>
+            <canvas id="rpt-bar" style="max-height:200px"></canvas>
+          </div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="fa-solid fa-star me-2 text-primary"></i>Summary</h6>
+          <div id="rpt-summary" class="row g-3"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         NOTIFICATIONS
+    ────────────────────────────── -->
+    <div id="panel-notifs" class="panel">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div><h4 class="fw-bold pf mb-0">Notifications</h4></div>
+        <button onclick="markRead()" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-check-double me-1"></i>Mark All Read</button>
+      </div>
+      <div id="notif-list" style="max-width:680px"></div>
+    </div>
+
+
+    <!-- ──────────────────────────────
+         PROFILE
+    ────────────────────────────── -->
+    <div id="panel-profile" class="panel">
+      <h4 class="fw-bold pf mb-4">My Profile</h4>
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card text-center p-4">
+            <div class="user-av mx-auto mb-3" id="prf-av" style="width:72px;height:72px;font-size:26px;background:var(--primary-light);color:var(--primary);border:2px solid var(--primary-border)">?</div>
+            <h5 id="prf-name" class="fw-bold mb-1"></h5>
+            <div id="prf-badge" class="mb-3"></div>
+            <div class="text-start" style="font-size:.85rem;color:var(--text-muted)">
+              <div class="mb-2"><i class="fa-solid fa-envelope me-2 text-primary" style="width:16px"></i><span id="prf-email"></span></div>
+              <div class="mb-2"><i class="fa-solid fa-building-columns me-2 text-primary" style="width:16px"></i><span id="prf-dept"></span></div>
+              <div><i class="fa-solid fa-layer-group me-2 text-primary" style="width:16px"></i>Level <span id="prf-level"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="card mb-4">
+            <div class="card-body">
+              <h6 class="fw-bold mb-3"><i class="fa-solid fa-key me-2 text-primary"></i>Change Password</h6>
+              <div class="row g-3" style="max-width:400px">
+                <div class="col-12"><label class="form-label">NEW PASSWORD</label><input type="password" id="pw-new" placeholder="Minimum 6 characters" class="form-control"/></div>
+                <div class="col-12"><label class="form-label">CONFIRM PASSWORD</label><input type="password" id="pw-conf" placeholder="Confirm new password" class="form-control"/></div>
+                <div class="col-12"><button onclick="changePw()" class="btn btn-primary btn-sm"><i class="fa-solid fa-shield-halved me-2"></i>Update Password</button></div>
+              </div>
+            </div>
+          </div>
+          <!-- Stats -->
+          <div class="card">
+            <div class="card-body">
+              <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-simple me-2 text-primary"></i>My Statistics</h6>
+              <div id="prf-stats" class="row g-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div id="sb-overlay" onclick="closeSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199"></div>
+
+
+<!-- ═══════════════════════════ MODALS ═══════════════════════════ -->
+
+<!-- ADD/EDIT TIMETABLE -->
+<div class="modal fade" id="tt-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold pf" id="tt-m-title">Add Timetable</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label">COURSE CODE *</label>
+            <input id="m-code" type="text" placeholder="e.g. CSC 201" class="form-control"/>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">CATEGORY *</label>
+            <select id="m-cat" class="form-select"><option value="">— Select Category —</option></select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">TIMETABLE TITLE *</label>
+            <input id="m-title" type="text" placeholder="e.g. Introduction to Programming" class="form-control"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label">FULL COURSE TITLE</label>
+            <input id="m-ctitle" type="text" placeholder="Full course title (optional)" class="form-control"/>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">DEPARTMENT</label>
+            <select id="m-dept" class="form-select"><option value="">— Select Dept —</option></select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">LEVEL</label>
+            <select id="m-lv" class="form-select">
+              <option>100</option><option>200</option><option selected>300</option><option>400</option><option>500</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">SEMESTER</label>
+            <select id="m-sem" class="form-select">
+              <option>First</option>
+              <option>Second</option>
+              <option>Third</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">SESSION YEAR</label>
+            <!-- <input id="m-sess" type="text" placeholder="2024/2025" 
+            class="form-control" value="2024/2025"/> -->
+            <select id="m-sess" class="form-select">
+              <option>2024/2025</option>
+              <option>2025/2026</option>
+              <option>2026/2027</option>
+              <option>2027/2028</option>
+              <option>2028/2029</option>
+              <option>2029/2030</option>
+              <option>2030/2031</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">VENUE / HALL</label>
+            <input id="m-venue" type="text" placeholder="e.g. Lecture Hall A" class="form-control"/>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">LECTURER</label>
+            <input id="m-lect" type="text" placeholder="e.g. Dr. Adeyemi" class="form-control"/>
+          </div>
+          <!-- TIME SLOTS -->
+          <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <label class="form-label mb-0">TIME SLOTS *</label>
+              <button onclick="addSlot()" type="button" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-plus me-1"></i>Add Slot</button>
+            </div>
+            <div id="slots-wrap" class="d-flex flex-column gap-2"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button onclick="saveTT()" id="tt-save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Save Timetable</button>
+      </div>
+      <input type="hidden" id="m-eid"/>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW TIMETABLE -->
+<div class="modal fade" id="view-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold pf" id="vm-title">Timetable Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="vm-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW (ADMIN) -->
+<div class="modal fade" id="rv-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold pf">Review Timetable</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="p-3 rounded-3 mb-3" style="background:#f8fafc;border:1px solid var(--border-clr)">
+          <div class="fw-semibold" id="rv-title" style="font-size:.9rem"></div>
+          <div id="rv-info" class="text-muted" style="font-size:.8rem;margin-top:3px"></div>
+        </div>
+        <div>
+          <label class="form-label">ADMIN NOTE (shown to student)</label>
+          <textarea id="rv-note" class="form-control" rows="3" placeholder="Leave feedback for the student…" style="resize:none"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer gap-2">
+        <button onclick="submitReview('reject')" class="btn btn-danger flex-fill"><i class="fa-solid fa-xmark me-2"></i>Reject</button>
+        <button onclick="submitReview('approve')" class="btn btn-success flex-fill"><i class="fa-solid fa-check me-2"></i>Approve</button>
+      </div>
+      <input type="hidden" id="rv-id"/>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STUDENT (ADMIN ONLY) -->
+<div class="modal fade" id="user-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:480px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold pf" id="usr-m-title">Add Student</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Admin-only notice -->
+        <div class="alert alert-primary d-flex gap-2 align-items-start mb-3 py-2 px-3" style="border-radius:10px;font-size:.82rem">
+          <i class="fa-solid fa-shield-halved mt-0.5 flex-shrink-0"></i>
+          <span>Only administrators can create student accounts. Students cannot self-register.</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">FULL NAME *</label>
+            <input id="u-name" type="text" placeholder="e.g. Samuel Okafor" class="form-control"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label">EMAIL ADDRESS *</label>
+            <input id="u-email" type="email" placeholder="student@crawford.edu.ng" class="form-control"/>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">DEPARTMENT *</label>
+            <select id="u-dept" class="form-select"><option value="">— Select —</option></select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">LEVEL *</label>
+            <select id="u-lv" class="form-select">
+              <option value="">— Select —</option>
+              <option>100</option><option>200</option><option>300</option><option>400</option><option>500</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">ROLE</label>
+            <select id="u-role" class="form-select">
+              <option value="student">Student</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">PASSWORD * (min 6 chars)</label>
+            <div class="input-group">
+              <input id="u-pw" type="password" placeholder="Set a secure password" class="form-control"/>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePw('u-pw',this)"><i class="fa-solid fa-eye" style="font-size:13px"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button onclick="saveUser()" id="usr-save" class="btn btn-primary"><i class="fa-solid fa-user-plus me-2"></i>Create Account</button>
+      </div>
+      <input type="hidden" id="u-eid"/>
+    </div>
+  </div>
+</div>
+
+<!-- DEPARTMENT MODAL -->
+<div class="modal fade" id="dept-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:440px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold pf" id="dept-m-title">Add Department</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12"><label class="form-label">DEPARTMENT NAME *</label><input id="dep-name" type="text" placeholder="e.g. Computer Science" class="form-control"/></div>
+          <div class="col-12"><label class="form-label">FACULTY / SCHOOL</label><input id="dep-faculty" type="text" placeholder="e.g. Science & Technology" class="form-control"/></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button onclick="saveDept()" id="dept-save" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Save</button>
+      </div>
+      <input type="hidden" id="dep-eid"/>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal fade" id="cat-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold pf" id="cat-m-title">New Category</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12"><label class="form-label">CATEGORY NAME *</label><input id="c-name" type="text" placeholder="e.g. Lab / Practical" class="form-control"/></div>
+          <div class="col-12"><label class="form-label">DESCRIPTION</label><input id="c-desc" type="text" placeholder="Brief description" class="form-control"/></div>
+          <div class="col-12">
+            <label class="form-label">COLOUR</label>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              <div class="csw sel" style="background:#2563EB" data-c="#2563EB"></div>
+              <div class="csw" style="background:#059669" data-c="#059669"></div>
+              <div class="csw" style="background:#D97706" data-c="#D97706"></div>
+              <div class="csw" style="background:#7C3AED" data-c="#7C3AED"></div>
+              <div class="csw" style="background:#DC2626" data-c="#DC2626"></div>
+              <div class="csw" style="background:#DB2777" data-c="#DB2777"></div>
+              <div class="csw" style="background:#0891B2" data-c="#0891B2"></div>
+              <div class="csw" style="background:#92400E" data-c="#92400E"></div>
+              <input type="color" id="c-custom" value="#2563EB" style="width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid #e2e8f0;padding:1px" title="Custom color"/>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">ICON (Font Awesome class)</label>
+            <div class="d-flex gap-2">
+              <input id="c-icon" type="text" placeholder="fa-calendar" class="form-control form-control-sm" style="flex:1"/>
+              <div id="c-icon-prev" class="d-flex align-items-center justify-content-center rounded-3" style="width:38px;min-width:38px;background:#f1f5f9;border:1.5px solid var(--border-clr)"><i id="c-icon-i" class="fa-solid fa-calendar text-primary"></i></div>
+            </div>
+            <div class="d-flex flex-wrap gap-1 mt-2">
+              <button type="button" onclick="si('fa-chalkboard-user')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-chalkboard-user"></i></button>
+              <button type="button" onclick="si('fa-flask')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-flask"></i></button>
+              <button type="button" onclick="si('fa-pencil')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-pencil"></i></button>
+              <button type="button" onclick="si('fa-microphone-lines')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-microphone-lines"></i></button>
+              <button type="button" onclick="si('fa-file-pen')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-pen"></i></button>
+              <button type="button" onclick="si('fa-screwdriver-wrench')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-screwdriver-wrench"></i></button>
+              <button type="button" onclick="si('fa-book-open')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-book-open"></i></button>
+              <button type="button" onclick="si('fa-brain')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-brain"></i></button>
+              <button type="button" onclick="si('fa-laptop-code')" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-laptop-code"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button onclick="saveCat()" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-2"></i>Save Category</button>
+      </div>
+      <input type="hidden" id="c-eid"/>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container" style="position:fixed;top:20px;right:20px;z-index:9999;min-width:280px"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ─── GLOBALS ──────────────────────────────────────────────────
+let U=null, CATS=[], DEPTS=[], catClr='#2563EB', charts={};
+let ttPg=1, attPg=1;
+const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TIMES=['7:00','8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+const PG_TITLES={overview:'Overview',timetables:'My Timetables',schedule:'Weekly Schedule','all-tt':'All Timetables',users:'Students',departments:'Departments',categories:'Categories',reports:'Reports',notifs:'Notifications',profile:'My Profile'};
+const PG_SUBS={overview:'Dashboard summary',timetables:'Your timetable submissions',schedule:'Visual weekly schedule of approved timetables','all-tt':'All submitted timetables (admin view)',users:'Create and manage student accounts',departments:'Manage university departments',categories:'Manage timetable categories',reports:'Analytics & reporting',notifs:'Alerts and updates',profile:'Account settings'};
+
+// ─── UTILS ────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const api=async(url,opts={})=>{
+  const r=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});
+  return r.json();
+};
+function toast(msg,type='info'){
+  const colors={info:'text-bg-primary',success:'text-bg-success',error:'text-bg-danger',warning:'text-bg-warning'};
+  const icons={info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation'};
+  const id='t'+Date.now();
+  const html=`<div id="${id}" class="toast show align-items-center ${colors[type]} mb-2" style="border-radius:12px">
+    <div class="d-flex"><div class="toast-body d-flex align-items-center gap-2 fw-medium" style="font-size:.875rem">
+      <i class="fa-solid ${icons[type]}"></i>${msg}
+    </div><button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()"></button>
+    </div></div>`;
+  $('toast-container').insertAdjacentHTML('beforeend',html);
+  setTimeout(()=>{const el=$(id);if(el)el.remove()},3500);
+}
+function bsModal(id){return bootstrap.Modal.getOrCreateInstance($(id))}
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function ini(name){return(name||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+function togglePw(id,btn){
+  const el=$(id);el.type=el.type==='password'?'text':'password';
+  btn.querySelector('i').className='fa-solid '+(el.type==='text'?'fa-eye-slash':'fa-eye')+' text-muted';
+}
+
+// ─── PANEL NAV ────────────────────────────────────────────────
+function go(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  $('panel-'+name).classList.add('active');
+  document.querySelector(`.nav-item[data-panel="${name}"]`)?.classList.add('active');
+  $('pg-title').textContent=PG_TITLES[name]||name;
+  $('pg-sub').textContent=PG_SUBS[name]||'';
+  closeSidebar();
+  if(name==='timetables')   loadTT();
+  if(name==='schedule')     loadSchedule();
+  if(name==='all-tt')       loadAllTT();
+  if(name==='users')        {fillDeptDropdown($('usr-dept'));loadUsers();}
+  if(name==='departments')  loadDepts();
+  if(name==='categories')   loadCats();
+  if(name==='reports')      loadReports();
+  if(name==='notifs')       loadNotifs();
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=$('sidebar');sb.classList.toggle('open');
+  $('sb-overlay').style.display=sb.classList.contains('open')?'block':'none';
+}
+function closeSidebar(){
+  $('sidebar').classList.remove('open');$('sb-overlay').style.display='none';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+window.addEventListener('load',async()=>{
+  const d=await api('/api/auth/me');
+  if(!d.user){location.href='/login';return}
+  U=d.user;
+  setupUI();
+  await Promise.all([loadCatsDropdown(),loadDeptsDropdown()]);
+  loadStats();loadOverview();loadNotifsBadge();
+  setInterval(loadNotifsBadge,30000);
+});
+
+function setupUI(){
+  const av=ini(U.full_name);
+  [$('sb-av'),$('wc-av'),$('prf-av')].forEach(el=>{if(el)el.textContent=av});
+  $('sb-name').textContent=U.full_name;
+  $('sb-sub').textContent=U.role==='admin'?'Administrator':`${U.department} · Level ${U.level}`;
+  $('wc-name').textContent=U.full_name.split(' ')[0];
+  $('wc-sub').textContent=U.role==='admin'
+    ?'You have full administrative access to Crawford TTMS.'
+    :`${U.department} · Level ${U.level}`;
+  $('prf-name').textContent=U.full_name;
+  $('prf-email').textContent=U.email;
+  $('prf-dept').textContent=U.department||'—';
+  $('prf-level').textContent=U.level||'—';
+  $('prf-badge').innerHTML=U.role==='admin'
+    ?'<span class="badge" style="background:var(--primary);font-size:.75rem">ADMINISTRATOR</span>'
+    :'<span class="badge" style="background:var(--success);font-size:.75rem">STUDENT</span>';
+  if(U.role==='admin'){
+    document.querySelectorAll('.admin-el').forEach(el=>el.classList.remove('d-none'));
+    $('adm-nav').classList.remove('d-none');
+  }
+  // timetable modal defaults
+  if($('m-lv'))$('m-lv').value=U.level||'300';
+}
+
+// ─── STATS ────────────────────────────────────────────────────
+async function loadStats(){
+  const d=await api('/api/stats');
+  const isAdm=U.role==='admin';
+  const items=isAdm
+    ?[{lbl:'Total Timetables',val:d.total,icon:'fa-calendar-days',bg:'#eff6ff',ic:'#2563eb',border:'#bfdbfe'},
+      {lbl:'Pending Review',val:d.pending,icon:'fa-clock',bg:'#fffbeb',ic:'#d97706',border:'#fde68a'},
+      {lbl:'Approved',val:d.approved,icon:'fa-circle-check',bg:'#f0fdf4',ic:'#16a34a',border:'#bbf7d0'},
+      {lbl:'Students',val:d.students,icon:'fa-users',bg:'#f5f3ff',ic:'#7c3aed',border:'#ddd6fe'}]
+    :[{lbl:'My Timetables',val:d.total,icon:'fa-calendar-days',bg:'#eff6ff',ic:'#2563eb',border:'#bfdbfe'},
+      {lbl:'Pending',val:d.pending,icon:'fa-clock',bg:'#fffbeb',ic:'#d97706',border:'#fde68a'},
+      {lbl:'Approved',val:d.approved,icon:'fa-circle-check',bg:'#f0fdf4',ic:'#16a34a',border:'#bbf7d0'},
+      {lbl:'Rejected',val:d.rejected,icon:'fa-circle-xmark',bg:'#fff1f2',ic:'#dc2626',border:'#fecaca'}];
+  $('stat-row').innerHTML=items.map(s=>`
+    <div class="col-6 col-xl-3">
+      <div class="stat-card d-flex align-items-center gap-3" style="border-color:${s.border}">
+        <div class="stat-icon flex-shrink-0" style="background:${s.bg};color:${s.ic}">
+          <i class="fa-solid ${s.icon}"></i>
+        </div>
+        <div>
+          <div class="fw-bold" style="font-size:1.75rem;line-height:1;color:var(--text-main)">${s.val}</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:3px">${s.lbl}</div>
+        </div>
+      </div>
+    </div>`).join('');
+  if(d.pending>0){
+    [$('pnd-badge'),$('pnd-badge2')].forEach(b=>{if(b){b.textContent=d.pending;b.classList.remove('d-none')}});
+    $('tb-dot').classList.remove('d-none');
+  }
+  // Profile stats
+  $('prf-stats').innerHTML=[
+    {l:'Timetables',v:d.total,c:'#2563eb',ic:'fa-calendar-days'},
+    {l:'Approved',v:d.approved,c:'#16a34a',ic:'fa-circle-check'},
+    {l:'Pending',v:d.pending,c:'#d97706',ic:'fa-clock'},
+  ].map(s=>`<div class="col-4 text-center">
+    <div style="font-size:1.6rem;font-weight:800;color:${s.c}">${s.v}</div>
+    <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px"><i class="fa-solid ${s.ic} me-1" style="color:${s.c}"></i>${s.l}</div>
+  </div>`).join('');
+}
+
+// ─── OVERVIEW ─────────────────────────────────────────────────
+async function loadOverview(){
+  const d=await api('/api/timetables?page=1');
+  const items=d.timetables||[];
+  $('ov-recent').innerHTML=!items.length
+    ?`<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div><p>No timetables yet.</p><button onclick="openAddTT()" class="btn btn-primary btn-sm">Add Your First</button></div>`
+    :items.slice(0,6).map(tt=>ttRowMini(tt)).join('');
+
+  if(U.role==='admin'){
+    const pd=await api('/api/timetables?status=pending&page=1');
+    const pi=pd.timetables||[];
+    $('ov-side').innerHTML=`
+      <div class="px-4 py-3 border-bottom d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0"><i class="fa-solid fa-clock me-2 text-warning"></i>Pending Review</h6>
+        <span class="badge rounded-pill" style="background:#fef3c7;color:#92400e">${pd.total||0}</span>
+      </div>
+      <div class="px-4 py-2">
+        ${!pi.length
+          ?`<div class="text-center py-4 text-muted" style="font-size:.85rem"><i class="fa-solid fa-circle-check text-success d-block mb-2 fs-4"></i>All clear!</div>`
+          :pi.slice(0,5).map(tt=>`
+            <div class="d-flex align-items-start gap-3 py-3 border-bottom" style="border-color:#f1f5f9!important">
+              <div class="rounded-circle flex-shrink-0 mt-1" style="width:8px;height:8px;background:#f59e0b;margin-top:6px"></div>
+              <div class="flex-fill overflow-hidden">
+                <div class="fw-semibold text-truncate" style="font-size:.82rem">${tt.course_code} — ${tt.title}</div>
+                <div class="text-muted" style="font-size:.75rem">${tt.owner_name} · ${tt.department}</div>
+              </div>
+              <button onclick="openReview(${tt.id},'${esc(tt.title)}','${esc(tt.course_code)}')" class="btn btn-warning btn-sm flex-shrink-0" style="font-size:.75rem">Review</button>
+            </div>`).join('')}
+        ${(pd.total||0)>5?`<div class="pt-2"><button onclick="go('all-tt')" class="btn btn-outline-secondary btn-sm w-100">View all ${pd.total} pending</button></div>`:''}
+      </div>`;
+    document.querySelectorAll('.admin-el').forEach(el=>el.classList.remove('d-none'));
+    const cd=await api('/api/chart');
+    renderBar('ov-chart',cd.data||[]);
+  } else {
+    const nd=await api('/api/notifs');
+    const ns=nd.notifs||[];
+    $('ov-side').innerHTML=`
+      <div class="px-4 py-3 border-bottom">
+        <h6 class="fw-bold mb-0"><i class="fa-solid fa-bell me-2 text-primary"></i>Recent Alerts</h6>
+      </div>
+      <div class="px-4 py-2">
+        ${!ns.length
+          ?`<div class="text-center py-4 text-muted" style="font-size:.85rem"><i class="fa-solid fa-bell-slash d-block mb-2 fs-4"></i>No notifications</div>`
+          :ns.slice(0,6).map(n=>notifMini(n)).join('')}
+      </div>`;
+  }
+}
+
+function ttRowMini(tt){
+  const sm={pending:'badge-pending',approved:'badge-approved',rejected:'badge-rejected'};
+  return `<div class="d-flex align-items-center gap-3 py-2 border-bottom" style="border-color:#f1f5f9!important">
+    <div class="flex-shrink-0 rounded-3 d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:${tt.category?.color||'#2563eb'}18;border:1px solid ${tt.category?.color||'#2563eb'}30">
+      <i class="fa-solid ${tt.category?.icon||'fa-calendar'}" style="color:${tt.category?.color||'#2563eb'};font-size:14px"></i>
+    </div>
+    <div class="flex-fill overflow-hidden">
+      <div class="fw-semibold text-truncate" style="font-size:.82rem;color:var(--text-main)">${tt.course_code} — ${tt.title}</div>
+      <div class="text-muted" style="font-size:.75rem">${tt.department} · L${tt.level}</div>
+    </div>
+    <span class="status-badge ${sm[tt.status]} flex-shrink-0">${tt.status}</span>
+  </div>`;
+}
+function notifMini(n){
+  const c={info:'text-primary',success:'text-success',error:'text-danger',warning:'text-warning'};
+  const ic={info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation'};
+  return `<div class="d-flex gap-2 py-2 border-bottom" style="border-color:#f1f5f9!important;opacity:${n.is_read?.5:1}">
+    <i class="fa-solid ${ic[n.ntype]||'fa-bell'} ${c[n.ntype]||'text-primary'} flex-shrink-0 mt-1" style="font-size:12px"></i>
+    <div style="font-size:.8rem;color:var(--text-main);line-height:1.5">${n.message}</div>
+  </div>`;
+}
+
+// ─── TIMETABLE PANEL ──────────────────────────────────────────
+async function loadTT(pg){
+  if(pg)ttPg=pg;
+  const q=$('tt-q').value||'',st=$('tt-st').value||'',cat=$('tt-cat').value||'',lv=$('tt-lv').value||'';
+  const d=await api(`/api/timetables?page=${ttPg}&q=${encodeURIComponent(q)}&status=${st}&cat=${cat}&level=${lv}`);
+  const items=d.timetables||[];
+  $('tt-label').textContent=`Showing ${items.length} of ${d.total} timetable(s)`;
+  $('tt-grid').innerHTML=!items.length
+    ?`<div class="col-12"><div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div><p>No timetables found.</p></div></div>`
+    :items.map(tt=>`<div class="col-md-6 col-xl-4">${ttCard(tt)}</div>`).join('');
+  const pages=d.pages||1;
+  $('tt-pages').innerHTML=pages<2?'':Array.from({length:pages},(_,i)=>
+    `<button onclick="loadTT(${i+1})" class="btn btn-sm ${i+1===ttPg?'btn-primary':'btn-outline-secondary'}">${i+1}</button>`).join('');
+}
+
+function ttCard(tt){
+  const sm={pending:'badge-pending',approved:'badge-approved',rejected:'badge-rejected'};
+  const canEdit=U.role==='admin'||tt.status!=='approved';
+  const canDel=U.role==='admin'||(tt.status!=='approved');
+  return `<div class="card h-100">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-start justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="flex-shrink-0 rounded-3 d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:${tt.category?.color||'#2563eb'}18;border:1px solid ${tt.category?.color||'#2563eb'}30">
+            <i class="fa-solid ${tt.category?.icon||'fa-calendar'}" style="color:${tt.category?.color||'#2563eb'};font-size:18px"></i>
+          </div>
+          <div>
+            <div class="fw-bold" style="font-size:.95rem;color:var(--text-main)">${tt.course_code}</div>
+            <div class="text-muted" style="font-size:.75rem">${tt.category?.name||'—'}</div>
+          </div>
+        </div>
+        <span class="status-badge ${sm[tt.status]}">${tt.status}</span>
+      </div>
+      <h6 class="fw-semibold mb-3" style="font-size:.875rem;color:var(--text-main);line-height:1.4">${tt.title}</h6>
+      <div class="mb-3" style="font-size:.8rem;color:var(--text-muted)">
+        <div class="mb-1"><i class="fa-solid fa-building-columns me-2 text-primary" style="width:14px"></i>${tt.department} · L${tt.level}</div>
+        <div class="mb-1"><i class="fa-solid fa-user-tie me-2 text-primary" style="width:14px"></i>${tt.lecturer||'TBA'}</div>
+        <div class="mb-1"><i class="fa-solid fa-location-dot me-2 text-primary" style="width:14px"></i>${tt.venue||'TBA'}</div>
+        <div class="mb-1"><i class="fa-solid fa-calendar-half me-2 text-primary" style="width:14px"></i>${tt.semester} · ${tt.session_year}</div>
+        ${U.role==='admin'?`<div><i class="fa-solid fa-user me-2 text-primary" style="width:14px"></i>${tt.owner_name}</div>`:''}
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button onclick="viewTT(${tt.id})" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye me-1"></i>View</button>
+        ${canEdit?`<button onclick="editTT(${tt.id})" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pen me-1"></i>Edit</button>`:''}
+        ${U.role==='admin'&&tt.status==='pending'?`<button onclick="openReview(${tt.id},'${esc(tt.title)}','${esc(tt.course_code)}')" class="btn btn-sm btn-warning"><i class="fa-solid fa-gavel me-1"></i>Review</button>`:''}
+        ${canDel?`<button onclick="delTT(${tt.id})" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash me-1"></i>Del</button>`:''}
+      </div>
+      ${tt.status==='rejected'&&tt.admin_note?`<div class="alert alert-danger p-2 mt-2 mb-0" style="font-size:.78rem;border-radius:8px"><i class="fa-solid fa-circle-xmark me-1"></i>${tt.admin_note}</div>`:''}
+      ${tt.status==='approved'&&tt.reviewed_at?`<div class="alert alert-success p-2 mt-2 mb-0" style="font-size:.78rem;border-radius:8px"><i class="fa-solid fa-circle-check me-1"></i>Approved ${tt.reviewed_at}</div>`:''}
+    </div>
+  </div>`;
+}
+
+async function viewTT(id){
+  const d=await api(`/api/timetables/${id}`);
+  const tt=d.timetable;if(!tt)return;
+  const sm={pending:'badge-pending',approved:'badge-approved',rejected:'badge-rejected'};
+  $('vm-title').textContent=`${tt.course_code} — ${tt.title}`;
+  $('vm-body').innerHTML=`
+    <div class="row g-3 mb-3">
+      <div class="col-sm-6"><div class="p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--border-clr)">
+        <div class="fw-bold text-muted mb-2" style="font-size:.7rem;letter-spacing:.1em">COURSE INFO</div>
+        <div style="font-size:.85rem" class="space-y-1">
+          <div><i class="fa-solid fa-hashtag me-2 text-primary"></i>${tt.course_code}</div>
+          <div class="mt-1"><i class="fa-solid fa-book me-2 text-primary"></i>${tt.course_title||tt.title}</div>
+          <div class="mt-1"><i class="fa-solid fa-tags me-2" style="color:${tt.category?.color||'#2563eb'}"></i>${tt.category?.name||'—'}</div>
+        </div>
+      </div></div>
+      <div class="col-sm-6"><div class="p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--border-clr)">
+        <div class="fw-bold text-muted mb-2" style="font-size:.7rem;letter-spacing:.1em">ACADEMIC</div>
+        <div style="font-size:.85rem">
+          <div><i class="fa-solid fa-building-columns me-2 text-primary"></i>${tt.department} · L${tt.level}</div>
+          <div class="mt-1"><i class="fa-solid fa-calendar-half me-2 text-primary"></i>${tt.semester} · ${tt.session_year}</div>
+          <div class="mt-1"><span class="status-badge ${sm[tt.status]}">${tt.status}</span></div>
+        </div>
+      </div></div>
+      <div class="col-sm-6"><div class="p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--border-clr)">
+        <div class="fw-bold text-muted mb-2" style="font-size:.7rem;letter-spacing:.1em">DETAILS</div>
+        <div style="font-size:.85rem">
+          <div><i class="fa-solid fa-user-tie me-2 text-primary"></i>${tt.lecturer||'TBA'}</div>
+          <div class="mt-1"><i class="fa-solid fa-location-dot me-2 text-primary"></i>${tt.venue||'TBA'}</div>
+          ${U.role==='admin'?`<div class="mt-1"><i class="fa-solid fa-user me-2 text-primary"></i>${tt.owner_name}</div>`:''}
+        </div>
+      </div></div>
+      <div class="col-sm-6"><div class="p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--border-clr)">
+        <div class="fw-bold text-muted mb-2" style="font-size:.7rem;letter-spacing:.1em">REVIEW</div>
+        <div style="font-size:.85rem;color:var(--text-muted)">
+          <div>${tt.admin_note||'No admin notes'}</div>
+          <div class="mt-1">${tt.reviewed_at?'Reviewed: '+tt.reviewed_at:'Not yet reviewed'}</div>
+        </div>
+      </div></div>
+    </div>
+    <div>
+      <div class="fw-bold text-muted mb-2" style="font-size:.7rem;letter-spacing:.1em">TIME SLOTS (${tt.slots?.length||0})</div>
+      ${tt.slots?.length?`
+        <div class="table-responsive"><table class="table table-custom table-sm mb-0">
+          <thead><tr><th>DAY</th><th>START</th><th>END</th><th>ROOM</th><th>NOTE</th></tr></thead>
+          <tbody>${tt.slots.map(s=>`<tr>
+            <td><span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:.75rem">${s.day}</span></td>
+            <td>${s.start_time}</td><td>${s.end_time}</td><td>${s.room||'—'}</td><td>${s.note||'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`
+      :`<p class="text-muted text-center py-3" style="font-size:.85rem">No time slots added.</p>`}
+    </div>
+    ${tt.status==='pending'&&U.role==='admin'?`
+      <div class="mt-3 pt-3 border-top">
+        <button onclick="bootstrap.Modal.getInstance($('view-modal')).hide();openReview(${tt.id},'${esc(tt.title)}','${esc(tt.course_code)}')" class="btn btn-warning btn-sm">
+          <i class="fa-solid fa-gavel me-2"></i>Review This Timetable
+        </button>
+      </div>`:''}`;
+  bsModal('view-modal').show();
+}
+
+async function editTT(id){
+  const d=await api(`/api/timetables/${id}`);
+  const tt=d.timetable;if(!tt)return;
+  openAddTT();
+  $('tt-m-title').textContent='Edit Timetable';
+  $('m-eid').value=id;
+  $('m-code').value=tt.course_code;$('m-title').value=tt.title;
+  $('m-ctitle').value=tt.course_title||'';
+  $('m-cat').value=tt.category?.id||'';
+  $('m-dept').value=tt.department_id||'';
+  $('m-lv').value=tt.level||'';
+  $('m-sem').value=tt.semester||'First';
+  $('m-sess').value=tt.session_year||'2024/2025';
+  $('m-venue').value=tt.venue||'';$('m-lect').value=tt.lecturer||'';
+  $('slots-wrap').innerHTML='';
+  (tt.slots||[]).forEach(s=>addSlot(s));
+}
+
+async function delTT(id){
+  if(!confirm('Delete this timetable? This cannot be undone.'))return;
+  const d=await api(`/api/timetables/${id}`,{method:'DELETE'});
+  if(d.error){toast(d.error,'error');return}
+  toast('Timetable deleted.','success');
+  loadTT();loadStats();loadOverview();
+}
+
+function openAddTT(){
+  $('tt-m-title').textContent='Add New Timetable';
+  $('m-eid').value='';
+  ['m-code','m-title','m-ctitle','m-venue','m-lect'].forEach(id=>$(id).value='');
+  $('m-cat').value='';
+  $('m-dept').value=U.department_id||'';
+  $('m-lv').value=U.level||'300';
+  $('m-sem').value='First';$('m-sess').value='2024/2025';
+  $('slots-wrap').innerHTML='';addSlot();
+  bsModal('tt-modal').show();
+}
+
+function addSlot(data={}){
+  const uid='sl'+Date.now()+Math.random().toString(36).slice(2,5);
+  const div=document.createElement('div');
+  div.id=uid;div.className='slot-row';
+  div.innerHTML=`<div class="row g-2 align-items-end">
+    <div class="col-sm-3 col-6">
+      <label class="form-label">DAY</label>
+      <select class="form-select form-select-sm slot-day">
+        ${DAYS.map(d=>`<option ${data.day===d?'selected':''}>${d}</option>`).join('')}
+      </select>
+    </div>
+    <div class="col-sm-2 col-3">
+      <label class="form-label">START</label>
+      <select class="form-select form-select-sm slot-st">
+        ${TIMES.map(t=>`<option ${data.start_time===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="col-sm-2 col-3">
+      <label class="form-label">END</label>
+      <select class="form-select form-select-sm slot-en">
+        ${TIMES.map(t=>`<option ${data.end_time===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="col-sm-3 col-9">
+      <label class="form-label">ROOM</label>
+      <input type="text" class="form-control form-control-sm slot-room" placeholder="e.g. LH-A" value="${data.room||''}"/>
+    </div>
+    <div class="col-sm-2 col-3">
+      <button onclick="document.getElementById('${uid}').remove()" type="button" class="btn btn-outline-danger btn-sm w-100"><i class="fa-solid fa-trash"></i></button>
+    </div>
+  </div>`;
+  $('slots-wrap').appendChild(div);
+}
+
+async function saveTT(){
+  const btn=$('tt-save');
+  const code=($('m-code').value||'').trim(),title=($('m-title').value||'').trim(),cat=$('m-cat').value;
+  if(!code||!title){toast('Course code and title are required.','warning');return}
+  if(!cat){toast('Please select a category.','warning');return}
+  const slots=[...$('slots-wrap').querySelectorAll('.slot-row')].map(r=>({
+    day:r.querySelector('.slot-day').value,
+    start_time:r.querySelector('.slot-st').value,
+    end_time:r.querySelector('.slot-en').value,
+    room:r.querySelector('.slot-room').value,
+  }));
+  if(!slots.length){toast('Add at least one time slot.','warning');return}
+  const body={course_code:code,title,course_title:$('m-ctitle').value||'',
+    category_id:parseInt(cat),department_id:$('m-dept').value?parseInt($('m-dept').value):null,
+    level:$('m-lv').value,semester:$('m-sem').value,
+    session_year:$('m-sess').value,venue:$('m-venue').value,
+    lecturer:$('m-lect').value,slots};
+  btn.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>Saving…';btn.disabled=true;
+  const eid=$('m-eid').value;
+  const d=eid
+    ?await api(`/api/timetables/${eid}`,{method:'PUT',body:JSON.stringify(body)})
+    :await api('/api/timetables',{method:'POST',body:JSON.stringify(body)});
+  btn.innerHTML='<i class="fa-solid fa-floppy-disk me-2"></i>Save Timetable';btn.disabled=false;
+  if(d.error){toast(d.error,'error');return}
+  bsModal('tt-modal').hide();
+  toast(eid?'Timetable updated!':'Timetable submitted for approval!','success');
+  loadTT();loadStats();loadOverview();
+}
+
+// ─── REVIEW ───────────────────────────────────────────────────
+function openReview(id,title,info){
+  $('rv-id').value=id;$('rv-title').textContent=title;
+  $('rv-info').textContent=info;$('rv-note').value='';
+  bsModal('rv-modal').show();
+}
+async function submitReview(action){
+  const id=$('rv-id').value,note=$('rv-note').value;
+  const d=await api(`/api/timetables/${id}/review`,{method:'POST',body:JSON.stringify({action,note})});
+  if(d.error){toast(d.error,'error');return}
+  bsModal('rv-modal').hide();
+  toast(action==='approve'?'Timetable approved!':'Timetable rejected.',action==='approve'?'success':'warning');
+  loadTT();loadStats();loadOverview();
+}
+
+// ─── ALL TIMETABLES (ADMIN) ───────────────────────────────────
+async function loadAllTT(pg){
+  if(pg)attPg=pg;
+  const q=$('att-q').value||'',st=$('att-st').value||'',cat=$('att-cat').value||'',lv=$('att-lv').value||'',dept=$('att-dept').value||'';
+  const d=await api(`/api/timetables?page=${attPg}&q=${encodeURIComponent(q)}&status=${st}&cat=${cat}&level=${lv}&dept=${dept}`);
+  const items=d.timetables||[];
+  $('att-label').textContent=`${d.total} total timetable(s)`;
+  const sm={pending:'badge-pending',approved:'badge-approved',rejected:'badge-rejected'};
+  $('att-tbody').innerHTML=!items.length
+    ?`<tr><td colspan="7" class="text-center py-5 text-muted">No records found.</td></tr>`
+    :items.map(tt=>`<tr>
+      <td><div class="fw-semibold" style="font-size:.85rem">${tt.course_code}</div><div class="text-muted" style="font-size:.75rem">${tt.title}</div></td>
+      <td style="font-size:.82rem">${tt.department}<br/><span class="text-muted" style="font-size:.75rem">L${tt.level}</span></td>
+      <td><span class="badge rounded-pill" style="background:${tt.category?.color||'#2563eb'}18;color:${tt.category?.color||'#2563eb'};border:1px solid ${tt.category?.color||'#2563eb'}30;font-size:.75rem">${tt.category?.name||'—'}</span></td>
+      <td style="font-size:.82rem">${tt.owner_name}</td>
+      <td><span class="status-badge ${sm[tt.status]}">${tt.status}</span></td>
+      <td style="font-size:.75rem;color:var(--text-muted)">${tt.created_at}</td>
+      <td><div class="d-flex gap-1 flex-nowrap">
+        <button onclick="viewTT(${tt.id})" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button>
+        ${tt.status==='pending'?`<button onclick="openReview(${tt.id},'${esc(tt.title)}','${esc(tt.course_code)}')" class="btn btn-sm btn-warning"><i class="fa-solid fa-gavel"></i></button>`:''}
+        <button onclick="delTT(${tt.id})" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('');
+  const pages=d.pages||1;
+  $('att-pages').innerHTML=pages<2?'':Array.from({length:pages},(_,i)=>
+    `<button onclick="loadAllTT(${i+1})" class="btn btn-sm ${i+1===attPg?'btn-primary':'btn-outline-secondary'}">${i+1}</button>`).join('');
+}
+
+// ─── USERS (ADMIN) ────────────────────────────────────────────
+async function loadUsers(){
+  const q=$('usr-q').value||'',dept=$('usr-dept').value||'',role=$('usr-role').value||'';
+  const d=await api(`/api/users?q=${encodeURIComponent(q)}&dept=${dept}&role=${role}`);
+  const users=d.users||[];
+  $('usr-tbody').innerHTML=!users.length
+    ?`<tr><td colspan="8" class="text-center py-5 text-muted">No users found.</td></tr>`
+    :users.map(u=>`<tr>
+      <td><div class="d-flex align-items-center gap-2">
+        <div class="user-av" style="width:32px;height:32px;font-size:11px;background:${u.role==='admin'?'#eff6ff':'#f0fdf4'};color:${u.role==='admin'?'#1d4ed8':'#15803d'};border:1px solid ${u.role==='admin'?'#bfdbfe':'#bbf7d0'}">${ini(u.full_name)}</div>
+        <div><div class="fw-semibold" style="font-size:.85rem">${u.full_name}</div><div class="text-muted" style="font-size:.75rem">${u.email}</div></div>
+      </div></td>
+      <td style="font-size:.82rem">${u.department||'—'}</td>
+      <td style="font-size:.82rem">${u.level||'—'}</td>
+      <td><span class="badge rounded-pill" style="background:${u.role==='admin'?'#eff6ff':'#f0fdf4'};color:${u.role==='admin'?'#1d4ed8':'#15803d'};font-size:.7rem;border:1px solid ${u.role==='admin'?'#bfdbfe':'#bbf7d0'}">${u.role.toUpperCase()}</span></td>
+      <td><span class="badge rounded-pill" style="background:${u.is_active?'#f0fdf4':'#fff1f2'};color:${u.is_active?'#15803d':'#991b1b'};font-size:.7rem;border:1px solid ${u.is_active?'#bbf7d0':'#fecaca'}">${u.is_active?'ACTIVE':'SUSPENDED'}</span></td>
+      <td style="font-size:.78rem;color:var(--text-muted)">${u.created_by_name}</td>
+      <td style="font-size:.75rem;color:var(--text-muted)">${u.created_at}</td>
+      <td><div class="d-flex gap-1 flex-nowrap">
+        <button onclick="editUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')})" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pen"></i></button>
+        <button onclick="toggleUser(${u.id},this)" class="btn btn-sm ${u.is_active?'btn-outline-warning':'btn-outline-success'}">${u.is_active?'Suspend':'Activate'}</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function openUserModal(){
+  $('usr-m-title').textContent='Add Student';
+  $('u-eid').value='';
+  ['u-name','u-email','u-pw'].forEach(id=>$(id).value='');
+  $('u-dept').value='';$('u-lv').value='';$('u-role').value='student';
+  fillDeptDropdown($('u-dept'));
+  bsModal('user-modal').show();
+}
+function editUserModal(u){
+  $('usr-m-title').textContent='Edit User';
+  $('u-eid').value=u.id;
+  $('u-name').value=u.full_name;$('u-email').value=u.email;
+  $('u-pw').value='';$('u-lv').value=u.level||'';$('u-role').value=u.role;
+  fillDeptDropdown($('u-dept'),u.department_id);
+  bsModal('user-modal').show();
+}
+async function saveUser(){
+  const btn=$('usr-save');
+  const name=($('u-name').value||'').trim(),email=($('u-email').value||'').trim(),
+    pw=$('u-pw').value,dept=$('u-dept').value,lv=$('u-lv').value,role=$('u-role').value;
+  if(!name||!email){toast('Name and email are required.','warning');return}
+  if(!dept){toast('Please select a department.','warning');return}
+  if(!lv){toast('Please select a level.','warning');return}
+  const eid=$('u-eid').value;
+  if(!eid&&pw.length<6){toast('Password must be at least 6 characters.','warning');return}
+  const body={full_name:name,email,department_id:parseInt(dept),level:lv,role};
+  if(pw)body.password=pw;
+  btn.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>Saving…';btn.disabled=true;
+  const d=eid
+    ?await api(`/api/users/${eid}`,{method:'PUT',body:JSON.stringify(body)})
+    :await api('/api/users',{method:'POST',body:JSON.stringify(body)});
+  btn.innerHTML='<i class="fa-solid fa-user-plus me-2"></i>Create Account';btn.disabled=false;
+  if(d.error){toast(d.error,'error');return}
+  bsModal('user-modal').hide();
+  toast(eid?'User updated!':'Student account created!','success');
+  loadUsers();
+}
+async function toggleUser(id){
+  const d=await api(`/api/users/${id}/toggle`,{method:'POST'});
+  if(d.error){toast(d.error,'error');return}
+  toast(d.is_active?'User activated.':'User suspended.','success');loadUsers();
+}
+
+// ─── DEPARTMENTS ──────────────────────────────────────────────
+async function loadDepts(){
+  const d=await api('/api/departments/all');
+  DEPTS=d.departments||[];
+  $('dept-grid').innerHTML=!DEPTS.length
+    ?`<div class="col-12"><div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-building-columns"></i></div><p>No departments yet.</p></div></div>`
+    :DEPTS.map(dep=>`
+      <div class="col-sm-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:#eff6ff;border:1px solid #bfdbfe">
+                  <i class="fa-solid fa-building-columns text-primary"></i>
+                </div>
+                <div>
+                  <div class="fw-bold" style="font-size:.9rem">${dep.name}</div>
+                  <div class="text-muted" style="font-size:.75rem">${dep.faculty||'—'}</div>
+                </div>
+              </div>
+              <span class="badge rounded-pill" style="background:${dep.is_active?'#f0fdf4':'#fff1f2'};color:${dep.is_active?'#15803d':'#991b1b'};font-size:.7rem;border:1px solid ${dep.is_active?'#bbf7d0':'#fecaca'}">${dep.is_active?'ACTIVE':'INACTIVE'}</span>
+            </div>
+            <div class="mb-3 d-flex gap-3" style="font-size:.8rem;color:var(--text-muted)">
+              <div><i class="fa-solid fa-users me-1 text-primary"></i>${dep.student_count} student(s)</div>
+              <div><i class="fa-solid fa-calendar-days me-1 text-primary"></i>${dep.tt_count} timetable(s)</div>
+            </div>
+            <div class="d-flex gap-2">
+              <button onclick="editDeptModal(${JSON.stringify(dep).replace(/"/g,'&quot;')})" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pen me-1"></i>Edit</button>
+              <button onclick="toggleDept(${dep.id},${!dep.is_active})" class="btn btn-sm ${dep.is_active?'btn-outline-warning':'btn-outline-success'}">
+                <i class="fa-solid ${dep.is_active?'fa-eye-slash':'fa-eye'} me-1"></i>${dep.is_active?'Disable':'Enable'}
+              </button>
+              ${dep.student_count===0&&dep.tt_count===0?`<button onclick="deleteDept(${dep.id})" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>`:''}
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+  fillAllDeptDropdowns();
+}
+
+function openDeptModal(){
+  $('dept-m-title').textContent='Add Department';$('dep-eid').value='';
+  $('dep-name').value='';$('dep-faculty').value='';bsModal('dept-modal').show();
+}
+function editDeptModal(dep){
+  $('dept-m-title').textContent='Edit Department';$('dep-eid').value=dep.id;
+  $('dep-name').value=dep.name;$('dep-faculty').value=dep.faculty||'';bsModal('dept-modal').show();
+}
+async function saveDept(){
+  const btn=$('dept-save');
+  const name=($('dep-name').value||'').trim();
+  if(!name){toast('Department name is required.','warning');return}
+  const body={name,faculty:($('dep-faculty').value||'').trim()};
+  const eid=$('dep-eid').value;
+  btn.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>';btn.disabled=true;
+  const d=eid
+    ?await api(`/api/departments/${eid}`,{method:'PUT',body:JSON.stringify(body)})
+    :await api('/api/departments',{method:'POST',body:JSON.stringify(body)});
+  btn.innerHTML='<i class="fa-solid fa-floppy-disk me-2"></i>Save';btn.disabled=false;
+  if(d.error){toast(d.error,'error');return}
+  bsModal('dept-modal').hide();
+  toast(eid?'Department updated!':'Department created!','success');
+  loadDepts();await loadDeptsDropdown();fillAllDeptDropdowns();
+}
+async function toggleDept(id,active){
+  await api(`/api/departments/${id}`,{method:'PUT',body:JSON.stringify({is_active:active})});
+  toast(active?'Department enabled.':'Department disabled.','success');
+  loadDepts();await loadDeptsDropdown();fillAllDeptDropdowns();
+}
+async function deleteDept(id){
+  if(!confirm('Delete this department?'))return;
+  const d=await api(`/api/departments/${id}`,{method:'DELETE'});
+  if(d.error){toast(d.error,'error');return}
+  toast('Department deleted.','success');loadDepts();
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────
+async function loadCats(){
+  const d=await api('/api/categories/all');
+  const cats=d.categories||[];
+  $('cat-grid').innerHTML=!cats.length
+    ?`<div class="col-12"><div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-tags"></i></div><p>No categories yet.</p></div></div>`
+    :cats.map(c=>`
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <div class="card h-100">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between mb-3">
+              <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:46px;height:46px;background:${c.color}18;border:1px solid ${c.color}30">
+                <i class="fa-solid ${c.icon}" style="color:${c.color};font-size:20px"></i>
+              </div>
+              <span class="badge rounded-pill" style="background:${c.is_active?'#f0fdf4':'#fff1f2'};color:${c.is_active?'#15803d':'#991b1b'};font-size:.7rem;border:1px solid ${c.is_active?'#bbf7d0':'#fecaca'}">${c.is_active?'ACTIVE':'INACTIVE'}</span>
+            </div>
+            <h6 class="fw-bold mb-1" style="font-size:.9rem">${c.name}</h6>
+            <p class="text-muted mb-2" style="font-size:.8rem;line-height:1.5">${c.description||'No description'}</p>
+            <div class="text-muted mb-3" style="font-size:.78rem"><i class="fa-solid fa-calendar-days me-1 text-primary"></i>${c.count} timetable(s)</div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button onclick="editCatModal(${JSON.stringify(c).replace(/"/g,'&quot;')})" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-pen me-1"></i>Edit</button>
+              <button onclick="toggleCat(${c.id},${!c.is_active})" class="btn btn-sm ${c.is_active?'btn-outline-warning':'btn-outline-success'}">
+                <i class="fa-solid ${c.is_active?'fa-eye-slash':'fa-eye'} me-1"></i>${c.is_active?'Disable':'Enable'}
+              </button>
+              ${c.count===0?`<button onclick="deleteCat(${c.id})" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>`:''}
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+}
+function openCatModal(){
+  $('cat-m-title').textContent='New Category';$('c-eid').value='';
+  $('c-name').value='';$('c-desc').value='';$('c-icon').value='fa-calendar';
+  setClr('#2563EB');updateIconPrev();bsModal('cat-modal').show();
+}
+function editCatModal(c){
+  $('cat-m-title').textContent='Edit Category';$('c-eid').value=c.id;
+  $('c-name').value=c.name;$('c-desc').value=c.description||'';$('c-icon').value=c.icon||'fa-calendar';
+  setClr(c.color||'#2563EB');updateIconPrev();bsModal('cat-modal').show();
+}
+function setClr(v){catClr=v;$('c-custom').value=v;document.querySelectorAll('.csw').forEach(s=>s.classList.toggle('sel',s.dataset.c===v))}
+function si(ic){$('c-icon').value=ic;updateIconPrev()}
+function updateIconPrev(){const ic=$('c-icon').value||'fa-calendar';$('c-icon-i').className=`fa-solid ${ic} text-primary`}
+$('c-icon').addEventListener('input',updateIconPrev);
+$('c-custom').addEventListener('input',e=>{catClr=e.target.value;document.querySelectorAll('.csw').forEach(s=>s.classList.remove('sel'))});
+document.querySelectorAll('.csw').forEach(s=>s.addEventListener('click',()=>setClr(s.dataset.c)));
+async function saveCat(){
+  const name=($('c-name').value||'').trim();
+  if(!name){toast('Name required.','warning');return}
+  const body={name,description:$('c-desc').value||'',color:catClr,icon:$('c-icon').value||'fa-calendar'};
+  const eid=$('c-eid').value;
+  const d=eid
+    ?await api(`/api/categories/${eid}`,{method:'PUT',body:JSON.stringify(body)})
+    :await api('/api/categories',{method:'POST',body:JSON.stringify(body)});
+  if(d.error){toast(d.error,'error');return}
+  bsModal('cat-modal').hide();toast(eid?'Category updated!':'Category created!','success');
+  loadCats();loadCatsDropdown();
+}
+async function toggleCat(id,active){
+  await api(`/api/categories/${id}`,{method:'PUT',body:JSON.stringify({is_active:active})});
+  toast(active?'Category enabled.':'Category disabled.','success');loadCats();loadCatsDropdown();
+}
+async function deleteCat(id){
+  if(!confirm('Delete this category?'))return;
+  const d=await api(`/api/categories/${id}`,{method:'DELETE'});
+  if(d.error){toast(d.error,'error');return}
+  toast('Category deleted.','success');loadCats();loadCatsDropdown();
+}
+
+// ─── DROPDOWN HELPERS ─────────────────────────────────────────
+async function loadCatsDropdown(){
+  const d=await api('/api/categories');CATS=d.categories||[];
+  [$('m-cat'),$('tt-cat'),$('att-cat')].forEach(sel=>{
+    if(!sel)return;const cur=sel.value,first=sel.options[0];sel.innerHTML='';sel.appendChild(first);
+    CATS.forEach(c=>{const o=new Option(c.name,c.id);sel.appendChild(o)});sel.value=cur;
+  });
+  // schedule cat
+  if($('sch-cat')){const sel=$('sch-cat'),first=sel.options[0];sel.innerHTML='';sel.appendChild(first);CATS.forEach(c=>{sel.appendChild(new Option(c.name,c.id))})}
+}
+async function loadDeptsDropdown(){
+  const d=await api('/api/departments');DEPTS=d.departments||[];
+}
+function fillDeptDropdown(sel,selectedId=null){
+  const first=sel.options[0];sel.innerHTML='';sel.appendChild(first);
+  DEPTS.forEach(dep=>{const o=new Option(dep.name,dep.id);sel.appendChild(o)});
+  if(selectedId)sel.value=selectedId;
+}
+function fillAllDeptDropdowns(){
+  [$('m-dept'),$('tt-dept'),$('att-dept'),$('sch-dept'),$('usr-dept')].forEach(sel=>{
+    if(!sel)return;const cur=sel.value,first=sel.options[0];sel.innerHTML='';sel.appendChild(first);
+    DEPTS.forEach(dep=>{sel.appendChild(new Option(dep.name,dep.id))});sel.value=cur;
+  });
+}
+
+// ─── SCHEDULE ─────────────────────────────────────────────────
+async function loadSchedule(){
+  const dept=$('sch-dept').value||'',lv=$('sch-lv').value||'',cat=$('sch-cat').value||'';
+  const d=await api(`/api/schedule?dept=${dept}&level=${lv}&cat=${cat}`);
+  const tts=d.timetables||[];
+  if(!tts.length){$('sch-grid').innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-calendar-xmark"></i></div><p>No approved timetables to display.</p></div>`;return}
+  // Build slot map
+  const sm={};
+  tts.forEach(tt=>(tt.slots||[]).forEach(s=>{
+    const k=`${s.day}|${s.start_time}`;
+    (sm[k]=sm[k]||[]).push({...s,code:tt.course_code,title:tt.title,venue:tt.venue,color:tt.category?.color||'#2563eb'});
+  }));
+  let html=`<div class="wk-grid mb-1">
+    <div class="wk-time" style="justify-content:center;background:#f1f5f9"><i class="fa-solid fa-clock text-muted" style="font-size:10px"></i></div>
+    ${DAYS.map(d=>`<div class="wk-hdr">${d.substring(0,3).toUpperCase()}</div>`).join('')}
+  </div>`;
+  TIMES.forEach(t=>{
+    html+=`<div class="wk-grid mb-0.5"><div class="wk-time">${t}</div>`;
+    DAYS.forEach(day=>{
+      const evs=(sm[`${day}|${t}`]||[]);
+      html+=`<div class="wk-cell">${evs.map(e=>`<div class="wk-event" style="border-left-color:${e.color};background:${e.color}" title="${e.code}: ${e.title}">
+        <div>${e.code}</div>${e.room?`<div style="font-size:8px;opacity:.8">${e.room}</div>`:''}
+      </div>`).join('')}</div>`;
+    });
+    html+='</div>';
+  });
+  $('sch-grid').innerHTML=html;
+}
+
+// ─── REPORTS ──────────────────────────────────────────────────
+async function loadReports(){
+  const s=await api('/api/stats');
+  const cd=await api('/api/chart');
+  if(charts.donut)charts.donut.destroy();
+  if(charts.bar)charts.bar.destroy();
+  charts.donut=new Chart($('rpt-donut').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['Pending','Approved','Rejected'],datasets:[{
+      data:[s.pending,s.approved,s.rejected],
+      backgroundColor:['#fef3c7','#dcfce7','#fee2e2'],
+      borderColor:['#f59e0b','#16a34a','#dc2626'],borderWidth:2
+    }]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{size:11}}}}}
+  });
+  charts.bar=renderBar('rpt-bar',cd.data||[]);
+  $('rpt-summary').innerHTML=[
+    {l:'Total Timetables',v:s.total,c:'#2563eb',ic:'fa-calendar-days'},
+    {l:'Approved',v:s.approved,c:'#16a34a',ic:'fa-circle-check'},
+    {l:'Pending',v:s.pending,c:'#d97706',ic:'fa-clock'},
+    {l:'Students',v:s.students,c:'#7c3aed',ic:'fa-users'},
+  ].map(s=>`<div class="col-6 col-md-3">
+    <div class="text-center p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--border-clr)">
+      <i class="fa-solid ${s.ic} mb-2 d-block fs-4" style="color:${s.c}"></i>
+      <div style="font-size:1.8rem;font-weight:800;color:${s.c}">${s.v}</div>
+      <div class="text-muted" style="font-size:.78rem;margin-top:2px">${s.l}</div>
+    </div>
+  </div>`).join('');
+}
+function renderBar(id,data){
+  if(!data.length)return;
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart($(id).getContext('2d'),{
+    type:'bar',
+    data:{labels:data.map(c=>c.name),datasets:[
+      {label:'Approved',data:data.map(c=>c.approved),backgroundColor:data.map(c=>c.color+'30'),borderColor:data.map(c=>c.color),borderWidth:1.5,borderRadius:5},
+      {label:'Pending',data:data.map(c=>c.pending),backgroundColor:'#fef3c7',borderColor:'#f59e0b',borderWidth:1.5,borderRadius:5},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}},min:0}}}
+  });
+  return charts[id];
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────
+async function loadNotifsBadge(){
+  const d=await api('/api/notifs');
+  const unread=d.unread||0;
+  if(unread>0){
+    [$('notif-badge'),$('tb-dot')].forEach(el=>{if(el)el.classList.remove('d-none')});
+    if($('notif-badge'))$('notif-badge').textContent=unread;
+  } else {
+    $('notif-badge')?.classList.add('d-none');$('tb-dot')?.classList.add('d-none');
+  }
+}
+async function loadNotifs(){
+  const d=await api('/api/notifs');
+  const ns=d.notifs||[];
+  const c={info:'text-primary',success:'text-success',error:'text-danger',warning:'text-warning'};
+  const ic={info:'fa-circle-info',success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation'};
+  const bgc={info:'#eff6ff',success:'#f0fdf4',error:'#fff1f2',warning:'#fffbeb'};
+  const bc={info:'#bfdbfe',success:'#bbf7d0',error:'#fecaca',warning:'#fde68a'};
+  $('notif-list').innerHTML=!ns.length
+    ?`<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-bell-slash"></i></div><p>No notifications yet.</p></div>`
+    :ns.map(n=>`
+      <div class="notif-item mb-2" style="background:${bgc[n.ntype]};border-color:${bc[n.ntype]};${!n.is_read?'border-left:3px solid var(--primary)':''}">
+        <div class="d-flex align-items-start gap-3">
+          <i class="fa-solid ${ic[n.ntype]||'fa-bell'} ${c[n.ntype]||'text-primary'} flex-shrink-0 mt-1"></i>
+          <div class="flex-fill">
+            <div style="font-size:.875rem;color:var(--text-main);line-height:1.5">${n.message}</div>
+            <div class="text-muted mt-1" style="font-size:.75rem"><i class="fa-regular fa-clock me-1"></i>${n.created_at}</div>
+          </div>
+          ${!n.is_read?'<span class="badge rounded-pill bg-primary flex-shrink-0" style="font-size:.65rem;padding:3px 8px">NEW</span>':''}
+        </div>
+      </div>`).join('');
+  loadNotifsBadge();
+}
+async function markRead(){
+  await api('/api/notifs/read',{method:'POST'});
+  toast('All notifications marked as read.','success');loadNotifs();
+}
+
+// ─── PROFILE ──────────────────────────────────────────────────
+async function changePw(){
+  const nw=$('pw-new').value,conf=$('pw-conf').value;
+  if(!nw||!conf){toast('Fill in both password fields.','warning');return}
+  if(nw!==conf){toast("Passwords don't match.",'warning');return}
+  if(nw.length<6){toast('Minimum 6 characters.','warning');return}
+  const d=await api(`/api/users/${U.id}`,{method:'PUT',body:JSON.stringify({password:nw})});
+  if(d.error){toast(d.error,'error');return}
+  toast('Password updated!','success');$('pw-new').value='';$('pw-conf').value='';
+}
+
+// ─── MISC ─────────────────────────────────────────────────────
+function gSearch(){
+  const q=$('g-search').value.trim();if(!q)return;
+  go('timetables');setTimeout(()=>{$('tt-q').value=q;loadTT();},100);
+}
+async function doLogout(){
+  await api('/api/auth/logout',{method:'POST'});location.href='/login';
+}
+</script>
+</body>
+</html>
